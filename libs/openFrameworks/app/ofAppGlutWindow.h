@@ -49,6 +49,7 @@ public:
 
 	int			getFrameNum();
 	float		getFrameRate();
+	int			getTargetFrameRate();
 	double		getLastFrameTime();
 	void		setFrameRate(float targetRate);
 

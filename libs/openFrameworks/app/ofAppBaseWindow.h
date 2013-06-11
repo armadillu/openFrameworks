@@ -23,7 +23,8 @@ public:
 	virtual void	setWindowShape(int w, int h) {}
 
 	virtual int		getFrameNum() { return 0; }
-	virtual	float	getFrameRate() {return 0; }
+	virtual	float	getFrameRate() {return 0.0f; }
+	virtual	int	getTargetFrameRate() {return 0; }
 	virtual double  getLastFrameTime(){ return 0.0; }
 
 	virtual ofPoint	getWindowPosition() {return ofPoint(); }

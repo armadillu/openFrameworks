@@ -433,6 +433,11 @@ void ofAppGlutWindow::showCursor(){
 }
 
 //------------------------------------------------------------
+int ofAppGlutWindow::getTargetFrameRate(){
+	return (int) (1.0f / (millisForFrame / 1000.0f));
+}
+
+//------------------------------------------------------------
 void ofAppGlutWindow::setFrameRate(float targetRate){
 	// given this FPS, what is the amount of millis per frame
 	// that should elapse?

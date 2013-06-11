@@ -207,6 +207,12 @@ float ofGetFrameRate(){
 	return window->getFrameRate();
 }
 
+//--------------------------------------
+int ofGetTargetFrameRate(){
+	return window->getTargetFrameRate();
+}
+
+//--------------------------------------
 double ofGetLastFrameTime(){
 	return window->getLastFrameTime();
 }

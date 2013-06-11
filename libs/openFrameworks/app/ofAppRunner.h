@@ -22,6 +22,7 @@ void		ofExit(int status=0);
 
 //-------------------------- time
 float 		ofGetFrameRate();
+int 		ofGetTargetFrameRate();
 int			ofGetFrameNum();
 void 		ofSetFrameRate(int targetRate);
 void		ofSleepMillis(int millis);
