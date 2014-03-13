@@ -576,9 +576,12 @@ void ofTexture::loadData(const void * data, int w, int h, int glFormat, int glTy
 			else if(texData.glTypeInternal == GL_LUMINANCE)
 				gluBuild2DMipmaps(texData.textureTarget, GL_COMPRESSED_SRGB_ALPHA, w, h, glFormat, glType, data);
 		}
-		
-		//using ARB compression: default
-		else
+
+		else if (texData.compressionType == OF_COMPRESS_MIPMAPS){ //ORIOL added this!
+			glTexSubImage2D(texData.textureTarget, 0, 0, 0, w, h, glFormat, glType, data);
+			glGenerateMipmap(texData.textureTarget);
+		}
+		else //using ARB compression: default
 		{
 			if(texData.glTypeInternal == GL_RGBA)
 				gluBuild2DMipmaps(texData.textureTarget, GL_COMPRESSED_RGBA_ARB, w, h, glFormat, glType, data);
