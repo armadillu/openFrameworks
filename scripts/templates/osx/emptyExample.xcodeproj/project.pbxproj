@@ -154,7 +154,9 @@ fi
 				<key>GCC_OPTIMIZATION_LEVEL</key>
 				<string>3</string>
 				<key>GCC_PREPROCESSOR_DEFINITIONS[arch=*]</key>
-				<string>DISTRIBUTION=1</string>
+				<array>
+					<string>DISTRIBUTION=1</string>
+				</array>
 				<key>GCC_SYMBOLS_PRIVATE_EXTERN</key>
 				<string>NO</string>
 				<key>GCC_UNROLL_LOOPS</key>
@@ -203,7 +205,9 @@ fi
 				<key>GCC_MODEL_TUNING</key>
 				<string>NONE</string>
 				<key>GCC_PREPROCESSOR_DEFINITIONS[arch=*]</key>
-				<string>APPSTORE=1</string>
+				<array>
+					<string>APPSTORE=1</string>
+				</array>
 				<key>ICON</key>
 				<string>$(ICON_NAME_RELEASE)</string>
 				<key>ICON_FILE</key>
