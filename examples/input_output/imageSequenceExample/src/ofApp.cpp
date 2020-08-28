@@ -30,9 +30,11 @@ void ofApp::setup() {
     ofDirectory dir;
     
     int nFiles = dir.listDir("plops");
+    dir.sort();
+    
     if(nFiles) {
-        
-        for(int i=0; i<dir.size(); i++) { 
+
+        for(size_t i=0; i<dir.size(); i++) { 
             
             // add the image to the vector
             string filePath = dir.getPath(i);

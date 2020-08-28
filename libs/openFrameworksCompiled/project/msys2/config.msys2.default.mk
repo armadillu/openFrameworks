@@ -25,29 +25,27 @@
 #   core source code.
 ##########################################################################################
 
-PLATFORM_PROJECT_DEBUG_BIN_NAME=$(APPNAME)_debug
-PLATFORM_PROJECT_RELEASE_BIN_NAME=$(APPNAME)
-PLATFORM_RUN_COMMAND =
-#ifneq (,$(findstring MINMGW64_NT,$(PLATFORM_OS)))
-MSYS2_ROOT = /mingw32
+MINGW_PREFIX ?= /mingw32
 PLATFORM_CFLAGS += -std=gnu++14 -DUNICODE -D_UNICODE
 #PLATFORM_CFLAGS += -IC:/msys64/mingw32/include/gstreamer-1.0 -DOF_VIDEO_PLAYER_GSTREAMER
-PLATFORM_LDFLAGS += -lpthread
-#ifeq ($(PLATFORM_ARCH),x86_64)
-CC = $(MSYS2_ROOT)/bin/gcc
-CXX = $(MSYS2_ROOT)/bin/g++
-FIND = /usr/bin/find
-PLATFORM_AR = $(MSYS2_ROOT)/bin/ar
-PLATFORM_LD = $(MSYS2_ROOT)/bin/ld
-PLATFORM_PKG_CONFIG = $(MSYS2_ROOT)/bin/pkg-config
-#endif
-#endif
+ifdef USE_CCACHE
+	CC = ccache $(MINGW_PREFIX)/bin/gcc
+	CXX = ccache $(MINGW_PREFIX)/bin/g++
+else
+	CC = $(MINGW_PREFIX)/bin/gcc
+	CXX = $(MINGW_PREFIX)/bin/g++
+endif
+FIND ?= /usr/bin/find
+PLATFORM_AR = $(MINGW_PREFIX)/bin/ar
+PLATFORM_LD = $(MINGW_PREFIX)/bin/ld
+PLATFORM_RESOURCE_COMPILER = $(MINGW_PREFIX)/bin/windres
+PLATFORM_PKG_CONFIG = $(MINGW_PREFIX)/bin/pkg-config
 
 
 PLATFORM_PROJECT_DEBUG_BIN_NAME=$(APPNAME)_debug.exe
 PLATFORM_PROJECT_RELEASE_BIN_NAME=$(APPNAME).exe
-PLATFORM_PROJECT_RELEASE_TARGET = bin/$(BIN_NAME)
-PLATFORM_PROJECT_DEBUG_TARGET = bin/$(BIN_NAME)
+PLATFORM_PROJECT_RELEASE_TARGET = bin/$(PLATFORM_PROJECT_RELEASE_BIN_NAME)
+PLATFORM_PROJECT_DEBUG_TARGET = bin/$(PLATFORM_PROJECT_DEBUG_BIN_NAME)
 PLATFORM_RUN_COMMAND = cd bin;./$(BIN_NAME)
 
 ##########################################################################################
@@ -64,8 +62,14 @@ PLATFORM_RUN_COMMAND = cd bin;./$(BIN_NAME)
 # Note: Be sure to leave a leading space when using a += operator to add items to the list
 ##########################################################################################
 
+#PLATFORM_DEFINES = OF_USING_STD_FS
 ifeq ($(OF_USE_POCO),1)
-	PLATFORM_DEFINES = POCO_STATIC
+	PLATFORM_DEFINES += POCO_STATIC
+endif
+
+ifeq ($(MSYSTEM),MINGW64)
+	PLATFORM_DEFINES += OF_SOUND_PLAYER_OPENAL
+	PLATFORM_DEFINES += OF_USING_MPG123
 endif
 
 ##########################################################################################
@@ -118,6 +122,14 @@ endif
 
 
 #PLATFORM_LDFLAGS += -arch i386
+PLATFORM_LDFLAGS += -lpthread
+ifndef DEBUG
+	PLATFORM_LDFLAGS += -mwindows
+endif
+ifeq ($(findstring OF_USING_STD_FS, $(PLATFORM_DEFINES)),OF_USING_STD_FS)
+	PLATFORM_LDFLAGS += -lstdc++fs
+endif
+
 
 ##########################################################################################
 # PLATFORM OPTIMIZATION CFLAGS
@@ -176,6 +188,11 @@ PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/openssl/%
 PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/boost/%
 PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/glfw/%
 PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/curl/%
+# FMOD is not supported on MINGW64
+ifeq ($(MSYSTEM),MINGW64)
+	PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/fmod/%
+endif
+#PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/glm/%
 
 
 ##########################################################################################
@@ -224,6 +241,13 @@ PLATFORM_PKG_CONFIG_LIBRARIES += glew
 PLATFORM_PKG_CONFIG_LIBRARIES += glfw3
 #PLATFORM_PKG_CONFIG_LIBRARIES += gstreamer-1.0
 PLATFORM_PKG_CONFIG_LIBRARIES += libcurl
+ifeq ($(findstring OF_SOUND_PLAYER_OPENAL, $(PLATFORM_DEFINES)),OF_SOUND_PLAYER_OPENAL)
+	PLATFORM_PKG_CONFIG_LIBRARIES += openal
+endif
+ifeq ($(findstring OF_USING_MPG123, $(PLATFORM_DEFINES)),OF_USING_MPG123)
+	PLATFORM_PKG_CONFIG_LIBRARIES += sndfile
+	PLATFORM_PKG_CONFIG_LIBRARIES += libmpg123
+endif
 
 # shared libraries
 PLATFORM_SHARED_LIBRARIES =
@@ -274,64 +298,24 @@ PLATFORM_LIBRARY_SEARCH_PATHS =
 ################################################################################
 #PLATFORM_CC=
 
+################################################################################
+# PLATFORM ICON
+#    If not set by the project by PROJECT_(RELEASE|DEBUG)_ICON, use OF defaults
+################################################################################
+PLATFORM_RELEASE_ICON = $(OF_PLATFORM_MAKEFILES)/icon.ico
+PLATFORM_DEBUG_ICON = $(OF_PLATFORM_MAKEFILES)/icon-debug.ico
+
 copy_dlls:
 	@echo "     copying dlls to bin"
-	@cp $(MSYS2_ROOT)/bin/libwinpthread-1.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libgcc_s_dw2-1.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libstdc++-6.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libboost_filesystem-mt.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libboost_system-mt.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libbz2-1.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libcairo-2.dll bin/
-	@cp $(MSYS2_ROOT)/bin/LIBEAY32.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libfreeimage-3.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libfreetype-6.dll bin/
-	@cp $(MSYS2_ROOT)/bin/glew32.dll bin/
-	@cp $(MSYS2_ROOT)/bin/SSLEAY32.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libfontconfig-1.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libpixman-1-0.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libpng16-16.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libHalf-2_2.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libharfbuzz-0.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libexpat-1.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libiconv-2.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libIex-2_2.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libIlmImf-2_2.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libImath-2_2.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libglib-2.0-0.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libIlmThread-2_2.dll bin/
-	@cp $(MSYS2_ROOT)/bin/liblcms2-2.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libintl-8.dll bin/
-	@cp $(MSYS2_ROOT)/bin/liblzma-5.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libminizip-1.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libjpeg-8.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libjpegxr.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libjxrglue.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libopenjp2-7.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libraw*.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libtiff-5.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libwebp*.dll bin/
-	@cp $(MSYS2_ROOT)/bin/zlib1.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libjasper-1.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libopencv_calib3d*.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libopencv_core*.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libopencv_features2d*.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libopencv_flann*.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libopencv_imgcodecs*.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libopencv_imgproc*.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libopencv_ml*.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libopencv_objdetect*.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libopencv_photo*.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libopencv_video*.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libopencv_videoio*.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libpcre-1.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libPoco*.dll bin/
-	@cp $(MSYS2_ROOT)/bin/tbb.dll bin/
-	@cp $(MSYS2_ROOT)/bin/zlib1.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libassimp.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libgraphite2.dll bin/
-	@cp $(MSYS2_ROOT)/bin/libgomp-1.dll bin/
 
+	@ntldd --recursive $(wildcard bin/$(APPNAME)*.exe) | sed -e 's:\\:/:g' | grep -F "$(MINGW_PREFIX)" | cut -d">" -f2 |cut -d" " -f2 >dlllist
+	
+	@while read -r dll; do \
+		test -e "$$dll" && cp "$$dll" ./bin; \
+    done <dlllist
+	@echo "     `wc -l <dlllist` dlls copied"
+	@rm dlllist
+	
 afterplatform: $(TARGET_NAME)
 	@if [ -e $(OF_LIBS_PATH)/*/lib/$(PLATFORM_LIB_SUBPATH)/*.$(SHARED_LIB_EXTENSION) ]; then cp $(OF_LIBS_PATH)/*/lib/$(PLATFORM_LIB_SUBPATH)/*.$(SHARED_LIB_EXTENSION) bin/; fi
 	@echo

@@ -2,14 +2,14 @@
 --
 ![Screenshot of Example](lutFilterExample.png)
 
-###Learning Objectives
+### Learning Objectives
 
 This openFrameworks Example is designed to demonstrate how to create LUT filters. LUT stands for "Look Up Table". Final Image = Source Image + LUT where LUT is the difference bewtween your desired outcome and your source. 
 
 In this example, pay attention to the following code:
 
 * ```void loadLUT(string path)``` 
-* ```void applyLUT(ofPixelsRef pix)``` uses ```ofVec3f``` and ```imgageName.setColor(x, y, color)``` to alter the color of every pixel of the image
+* ```void applyLUT(ofPixelsRef pix)``` uses ```glm::vec3``` and ```imgageName.setColor(x, y, color)``` to alter the color of every pixel of the image
 
 
 ### Expected Behavior
@@ -24,6 +24,6 @@ Instructions for use:
 * Use the up and down keys to filter through the list
 
 
-###Other classes used in this file
+### Other classes used in this file
 
 This Example does not use any other classes. 

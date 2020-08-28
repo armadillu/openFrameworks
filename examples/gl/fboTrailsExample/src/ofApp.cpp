@@ -11,22 +11,22 @@ void ofApp::setup(){
 	rgbaFbo.allocate(400, 400, GL_RGBA); // with alpha, 8 bits red, 8 bits green, 8 bits blue, 8 bits alpha, from 0 to 255 in 256 steps
 
 	#ifdef TARGET_OPENGLES
-	rgbaFboFloat.allocate(400, 400, GL_RGBA ); // with alpha, 32 bits red, 32 bits green, 32 bits blue, 32 bits alpha, from 0 to 1 in 'infinite' steps
+	rgbaFboFloat.allocate(400, 400, GL_RGBA ); // with alpha, 8 bits red, 8 bits green, 8 bits blue, 8 bits alpha, from 0 to 255 in 256 steps
         ofLogWarning("ofApp") << "GL_RGBA32F_ARB is not available for OPENGLES.  Using RGBA.";
 	#else
         rgbaFboFloat.allocate(400, 400, GL_RGBA32F_ARB); // with alpha, 32 bits red, 32 bits green, 32 bits blue, 32 bits alpha, from 0 to 1 in 'infinite' steps
 	#endif
 
-	// we can also define the fbo with ofFbo::Settings.
+	// we can also define the fbo with ofFboSettings.
 	// this allows us so set more advanced options the width (400), the height (200) and the internal format like this
 	/*
-	 ofFbo::Settings s;
+	 ofFboSettings s;
 	 s.width			= 400;
 	 s.height			= 200;
 	 s.internalformat   = GL_RGBA;
 	 s.useDepth			= true;
 	 // and assigning this values to the fbo like this:
-	 rgbFbo.allocate(s);
+	 rgbaFbo.allocate(s);
 	 */
 
 
@@ -114,12 +114,12 @@ void ofApp::drawFboTest(){
 //--------------------------------------------------------------
 void ofApp::draw(){
 
-    ofSetColor(255,255,255);
-    rgbaFbo.draw(0,0);
-    rgbaFboFloat.draw(410,0);
+    ofSetColor(255, 255, 255);
+    rgbaFbo.draw(0, 0);
+    rgbaFboFloat.draw(410, 0);
 
-    ofDrawBitmapString("non floating point FBO", ofPoint(10,20));
-    ofDrawBitmapString("floating point FBO", ofPoint(420,20));
+    ofDrawBitmapString("non floating point FBO", 10, 20);
+    ofDrawBitmapString("floating point FBO", 420, 20);
 
 	string alphaInfo = "Current alpha fade amnt = " + ofToString(fadeAmnt);
 	alphaInfo += "\nHold '1' to set alpha fade to 1";
@@ -127,7 +127,7 @@ void ofApp::draw(){
 	alphaInfo += "\nHold '3' to set alpha fade to 15";
 	alphaInfo += "\nHold 'c' to clear the fbo each frame\n\nMove mouse to draw with a circle";
 
-    ofDrawBitmapString(alphaInfo, ofPoint(10,430));
+    ofDrawBitmapString(alphaInfo, 10, 430);
 
 }
 

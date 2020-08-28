@@ -55,9 +55,9 @@ void ofApp::update(){
 	// all testNodes move in simple circles
 	// but because they are parented to each other, complex paths emerge
 	for(int i=0; i<kNumTestNodes; i++) {
-		testNodes[i].setPosition(ofVec3f(sin(ofGetElapsedTimef() * freqMult) * amp, cos(ofGetElapsedTimef() * freqMult) * amp, sin(ofGetElapsedTimef() * freqMult * 0.7) * amp));
+		testNodes[i].setPosition(glm::vec3(sin(ofGetElapsedTimef() * freqMult) * amp, cos(ofGetElapsedTimef() * freqMult) * amp, sin(ofGetElapsedTimef() * freqMult * 0.7) * amp));
 		
-		testNodes[i].setOrientation(ofVec3f(sin(ofGetElapsedTimef() * freqMult * 0.2) * amp * 5, cos(ofGetElapsedTimef() * freqMult * 0.2) * amp * 5, sin(ofGetElapsedTimef() * freqMult * 0.2 * 0.7) * amp * 5));
+		testNodes[i].setOrientation(glm::vec3(sin(ofGetElapsedTimef() * freqMult * 0.2) * amp * 5, cos(ofGetElapsedTimef() * freqMult * 0.2) * amp * 5, sin(ofGetElapsedTimef() * freqMult * 0.2 * 0.7) * amp * 5));
 		testNodes[i].setScale(scale);
 		
 		freqMult *= 3;
@@ -104,7 +104,7 @@ void ofApp::draw(){
 	glDisable(GL_CULL_FACE);
 	ofSetColor(255);
 	ofDisableLighting();
-	ofDrawBitmapString(s, ofPoint(20, 20));
+	ofDrawBitmapString(s, 20, 20);
 	
 	glEnable(GL_CULL_FACE);
 	ofEnableLighting();
@@ -123,9 +123,9 @@ void ofApp::draw(){
 			lat = ofClamp(lat + mouseY - ofGetPreviousMouseY(), -90, 90);
 			
 			if(lookatIndex[i] < 0) {
-				cam[i].orbit(lon, lat, orbitRadius);
+				cam[i].orbitDeg(lon, lat, orbitRadius);
 			} else {
-				cam[i].orbit(lon, lat, orbitRadius, testNodes[lookatIndex[1]]);
+				cam[i].orbitDeg(lon, lat, orbitRadius, testNodes[lookatIndex[1]]);
 			}
 		}
 		
@@ -152,16 +152,16 @@ void ofApp::draw(){
 		// draw line from cam to its lookat
 		if(lookatIndex[i] >= 0) {
 			ofSetColor(0, 255, 255);
-			ofVec3f v1 = cam[i].getGlobalPosition();
-			ofVec3f v2 = testNodes[lookatIndex[i]].getGlobalPosition();
+			glm::vec3 v1 = cam[i].getGlobalPosition();
+			glm::vec3 v2 = testNodes[lookatIndex[i]].getGlobalPosition();
             ofDrawLine(v1,v2);
 		}
 		
 		// draw line from cam to its parent
 		if(parentIndex[i] >= 0) {
 			ofSetColor(255, 255, 0);
-			ofVec3f v1 = cam[i].getGlobalPosition();
-			ofVec3f v2 = testNodes[parentIndex[i]].getGlobalPosition();
+			glm::vec3 v1 = cam[i].getGlobalPosition();
+			glm::vec3 v2 = testNodes[parentIndex[i]].getGlobalPosition();
             ofDrawLine(v1,v2);
 		}
 	}
@@ -186,14 +186,14 @@ void ofApp::keyPressed(int key){
 			break;
 			
 			
-		case OF_KEY_LEFT: n->pan(kRotInc); break;
-		case OF_KEY_RIGHT: n->pan(-kRotInc); break;
+		case OF_KEY_LEFT: n->panDeg(kRotInc); break;
+		case OF_KEY_RIGHT: n->panDeg(-kRotInc); break;
 			
-		case OF_KEY_UP: n->tilt(-kRotInc); break;
-		case OF_KEY_DOWN: n->tilt(kRotInc); break;
+		case OF_KEY_UP: n->tiltDeg(-kRotInc); break;
+		case OF_KEY_DOWN: n->tiltDeg(kRotInc); break;
 			
-		case ',': n->roll(kRotInc); break;
-		case '.': n->roll(-kRotInc); break;
+		case ',': n->rollDeg(kRotInc); break;
+		case '.': n->rollDeg(-kRotInc); break;
 			
 		case 'a': n->truck(-kMoveInc); break;
 		case 'd': n->truck(kMoveInc); break;
@@ -236,8 +236,8 @@ void ofApp::keyPressed(int key){
 			
 		case 'p':
 			parentIndex[camToConfigure]++ ; 
-			ofVec3f oldP = cam[camToConfigure].getGlobalPosition();
-			ofQuaternion oldQ = cam[camToConfigure].getGlobalOrientation();
+			glm::vec3 oldP = cam[camToConfigure].getGlobalPosition();
+			glm::quat oldQ = cam[camToConfigure].getGlobalOrientation();
 			if(parentIndex[camToConfigure]>=kNumTestNodes) {
 				parentIndex[camToConfigure] = -1;
 				cam[camToConfigure].clearParent();

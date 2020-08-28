@@ -13,14 +13,15 @@ cat << EOF
     Options:
 
     -v, --version VERSION       OF version to download the libraries for. Defaults to master
-    -p, --platform PLATFORM     Platorm among: android, emscritpen, ios, linux, linux64, linuxarmv6l, linuxarmv7l, msys2, osx, tvos, vs
+    -p, --platform PLATFORM     Platorm among: android, emscritpen, ios, linux, linux64, linuxarmv6l, linuxarmv7l, msys2, osx, tvos, vs2015, vs2017
                                 If not specified tries to autodetect the platform.
     -a, --arch ARCH             Architecture:
-                                    vs: 32 or 64
-                                    msys2: 32
-                                    android: armv7 or x86 (if not specified will download both)
-                                    linux: 64, 64gcc5, 64gcc6, armv6l or armv7l
-    -n, --no-overwrite          Merge new libraries with exisiting ones, use only to download same version for different platforms
+                                    vs2015: 32 or 64
+                                    vs2017: 32 or 64
+                                    msys2: 32 or 64
+                                    android: armv7, arm64, and x86 (if not specified will download all)
+                                    linux: 64gcc4, 64gcc5, 64gcc6 / 64, armv6l or armv7l
+    -n, --no-overwrite          Merge new libraries with existing ones, use only to download same version for different platforms
                                 If not set deletes any existing libraries
     -s, --silent                Silent download progress
     -h, --help                  Shows this message
@@ -36,7 +37,7 @@ download(){
 trap 'trapError ${LINENO}' ERR
 trap "trapError" SIGINT SIGTERM
 
-trapError() { 
+trapError() {
     local parent_lineno="$1"
     if [[ "$#" = "3" ]] ; then
         local message="$2"
@@ -46,7 +47,7 @@ trapError() {
         local code="${2:-1}"
         echo "Error on or near line ${parent_lineno}; exiting with status ${code}"
     fi
-    
+
     if [ -e openFrameworksLibs* ]; then
         echo "removing packages"
     	rm openFrameworksLibs*
@@ -95,10 +96,11 @@ if [ "$PLATFORM" == "" ]; then
         PLATFORM="linux"
     elif [ "$OS" == "Darwin" ]; then
         PLATFORM="osx"
+    elif [ "${OS:0:5}" == "MINGW" ]; then
+        PLATFORM="msys2"
     else
         # otherwise we are on windows and will download 32bit msys2
         PLATFORM="msys2"
-        ARCH=32
     fi
 fi
 
@@ -108,11 +110,16 @@ if [ "$ARCH" == "" ]; then
         if [ "$ARCH" == "x86_64" ]; then
             GCC_VERSION=$(gcc -dumpversion | cut -f1 -d.)
             if [ $GCC_VERSION -eq 4 ]; then
-                ARCH=64
-            elif [ $GCC_VERSION -eq 5]; then
+                ARCH=64gcc4
+            elif [ $GCC_VERSION -eq 5 ]; then
                 ARCH=64gcc5
             else
                 ARCH=64gcc6
+            fi
+        elif [ "$ARCH" == "armv7l" ]; then
+            # Check for Raspberry Pi
+            if [ -f /opt/vc/include/bcm_host.h ]; then
+                ARCH=armv6l
             fi
         elif [ "$ARCH" == "i686" ] || [ "$ARCH" == "i386" ]; then
             cat << EOF
@@ -123,22 +130,63 @@ EOF
             exit 1
         fi
     elif [ "$PLATFORM" == "msys2" ]; then
-        ARCH=32
+        if [ "$MSYSTEM" == "MINGW64" ]; then 
+            ARCH=64
+        elif [ "$MSYSTEM" == "MINGW32" ]; then 
+            ARCH=32
+        else
+            cat << EOF
+This MSYS2 variant ($MSYSTEM) is not recognized.
+Check if you are running a MINGW32 or MINGW64 shell.
+Assuming 32bits version for now...
+EOF
+            ARCH=32
+        fi 
     fi
 fi
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd $SCRIPT_DIR
+if [ "$PLATFORM" == "linux" ] && [ "$ARCH" == "64" ]; then
+    ARCH=64gcc6
+fi
 
-if [ "$ARCH" == "" ] && [ "$PLATFORM" == "vs" ]; then
-    PKGS="openFrameworksLibs_${VER}_${PLATFORM}32.zip openFrameworksLibs_${VER}_${PLATFORM}64.zip"
-elif [ "$PLATFORM" == "msys2" ] || [ "$PLATFORM" == "vs" ]; then
-    PKGS="openFrameworksLibs_${VER}_${PLATFORM}${ARCH}.zip"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "$SCRIPT_DIR"
+
+if [ "$ARCH" == "" ] && [ "$PLATFORM" == "vs2015" ]; then
+    PKGS="openFrameworksLibs_${VER}_${PLATFORM}_32_1.zip \
+          openFrameworksLibs_${VER}_${PLATFORM}_32_2.zip \
+          openFrameworksLibs_${VER}_${PLATFORM}_32_3.zip \
+          openFrameworksLibs_${VER}_${PLATFORM}_32_4.zip \
+          openFrameworksLibs_${VER}_${PLATFORM}_64_1.zip \
+          openFrameworksLibs_${VER}_${PLATFORM}_64_2.zip \
+          openFrameworksLibs_${VER}_${PLATFORM}_64_3.zip \
+          openFrameworksLibs_${VER}_${PLATFORM}_64_4.zip"
+elif [ "$ARCH" == "" ] && [ "$PLATFORM" == "vs2017" ]; then
+    PKGS="openFrameworksLibs_${VER}_${PLATFORM}_32_1.zip \
+          openFrameworksLibs_${VER}_${PLATFORM}_32_2.zip \
+          openFrameworksLibs_${VER}_${PLATFORM}_32_3.zip \
+          openFrameworksLibs_${VER}_${PLATFORM}_32_4.zip \
+          openFrameworksLibs_${VER}_${PLATFORM}_64_1.zip \
+          openFrameworksLibs_${VER}_${PLATFORM}_64_2.zip \
+          openFrameworksLibs_${VER}_${PLATFORM}_64_3.zip \
+          openFrameworksLibs_${VER}_${PLATFORM}_64_4.zip"
+elif [ "$PLATFORM" == "msys2" ]; then
+    PKGS="openFrameworksLibs_${VER}_${PLATFORM}_mingw${ARCH}.zip"
+elif [ "$PLATFORM" == "vs2015" ] || [ "$PLATFORM" == "vs2017" ]; then
+    PKGS="openFrameworksLibs_${VER}_${PLATFORM}_${ARCH}_1.zip \
+          openFrameworksLibs_${VER}_${PLATFORM}_${ARCH}_2.zip \
+          openFrameworksLibs_${VER}_${PLATFORM}_${ARCH}_3.zip \
+          openFrameworksLibs_${VER}_${PLATFORM}_${ARCH}_4.zip"
 elif [ "$ARCH" == "" ] && [[ "$PLATFORM" == "osx" || "$PLATFORM" == "ios" || "$PLATFORM" == "tvos" ]]; then
-    PKGS="openFrameworksLibs_${VER}_${PLATFORM}1.tar.bz2 openFrameworksLibs_${VER}_${PLATFORM}2.tar.bz2 openFrameworksLibs_${VER}_${PLATFORM}3.tar.bz2"
+    PKGS="openFrameworksLibs_${VER}_${PLATFORM}1.tar.bz2 \
+          openFrameworksLibs_${VER}_${PLATFORM}2.tar.bz2 \
+          openFrameworksLibs_${VER}_${PLATFORM}3.tar.bz2 \
+          openFrameworksLibs_${VER}_${PLATFORM}4.tar.bz2"
 elif [ "$ARCH" == "" ] && [ "$PLATFORM" == "android" ]; then
-    PKGS="openFrameworksLibs_${VER}_${PLATFORM}armv7.tar.bz2 openFrameworksLibs_${VER}_${PLATFORM}x86.tar.bz2"
-else
+    PKGS="openFrameworksLibs_${VER}_${PLATFORM}armv7.tar.bz2 \
+          openFrameworksLibs_${VER}_${PLATFORM}arm64.tar.bz2 \
+          openFrameworksLibs_${VER}_${PLATFORM}x86.tar.bz2"
+else # Linux
     PKGS="openFrameworksLibs_${VER}_${PLATFORM}${ARCH}.tar.bz2"
 fi
 
@@ -162,7 +210,7 @@ fi
 
 for PKG in $PKGS; do
     echo "Uncompressing libraries ${PLATFORM}${ARCH} from $PKG"
-    if [ "$PLATFORM" == "msys2" ] || [ "$PLATFORM" == "vs" ]; then
+    if [ "$PLATFORM" == "msys2" ] || [ "$PLATFORM" == "vs2015" ] || [ "$PLATFORM" == "vs2017" ]; then
         unzip -qo ../scripts/dev/$PKG
         rm ../scripts/dev/$PKG
     else
@@ -171,7 +219,13 @@ for PKG in $PKGS; do
     fi
 done
 
-if [[ "$PLATFORM" == "osx" || "$PLATFORM" == "ios" || "$PLATFORM" == "tvos" ]]; then
+if [ "$PLATFORM" == "osx" ]; then
+    addonslibs=("opencv" "ippicv" "libusb" "assimp" "libxml2" "svgtiny" "poco" "openssl")
+    addons=("ofxOpenCv" "ofxOpenCv" "ofxKinect" "ofxAssimpModelLoader" "ofxSvg" "ofxSvg" "ofxPoco" "ofxPoco")
+elif [ "$PLATFORM" == "vs2015" ] || [ "$PLATFORM" == "vs2017" ]; then
+    addonslibs=("opencv" "ippicv" "libusb" "assimp" "libxml2" "svgtiny" "poco")
+    addons=("ofxOpenCv" "ofxOpenCv" "ofxKinect" "ofxAssimpModelLoader" "ofxSvg" "ofxSvg" "ofxPoco")
+elif [ "$PLATFORM" == "ios" ] || [ "$PLATFORM" == "tvos" ]; then
     addonslibs=("opencv" "ippicv" "assimp" "libxml2" "svgtiny" "poco" "openssl")
     addons=("ofxOpenCv" "ofxOpenCv" "ofxAssimpModelLoader" "ofxSvg" "ofxSvg" "ofxPoco" "ofxPoco")
 else
@@ -191,4 +245,3 @@ for ((i=0;i<${#addonslibs[@]};++i)); do
         rm -rf ${addonslibs[i]}
     fi
 done
-

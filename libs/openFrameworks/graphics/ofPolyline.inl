@@ -1,7 +1,14 @@
-#include "ofRectangle.h"
-#include "ofAppRunner.h"
+#ifndef OF_POLYLINE_H
 #include "ofPolyline.h"
+#endif
+
+#include "ofConstants.h"
+#include "ofRectangle.h"
+#include "ofGraphicsBaseTypes.h"
 #include "ofVectorMath.h"
+#include "ofAppRunner.h"
+#include "ofMath.h"
+#include "ofLog.h"
 
 //----------------------------------------------------------
 template<class T>
@@ -12,7 +19,7 @@ ofPolyline_<T>::ofPolyline_(){
 
 //----------------------------------------------------------
 template<class T>
-ofPolyline_<T>::ofPolyline_(const vector<T>& verts){
+ofPolyline_<T>::ofPolyline_(const std::vector<T>& verts){
     setRightVector();
 	clear();
 	addVertices(verts);
@@ -57,7 +64,7 @@ void ofPolyline_<T>::addVertex(float x, float y, float z) {
 
 //----------------------------------------------------------
 template<class T>
-void ofPolyline_<T>::addVertices(const vector<T>& verts) {
+void ofPolyline_<T>::addVertices(const std::vector<T>& verts) {
 	curveVertices.clear();
 	points.insert( points.end(), verts.begin(), verts.end() );
     flagHasChanged();
@@ -83,6 +90,19 @@ void ofPolyline_<T>::insertVertex(const T &p, int index) {
 template<class T>
 void ofPolyline_<T>::insertVertex(float x, float y, float z, int index) {
 	insertVertex(T(x, y, z), index);
+}
+
+
+//----------------------------------------------------------
+template<class T>
+void ofPolyline_<T>::removeVertex(int index) {
+	if(index >= points.size()){
+		ofLogError("ofPolyline") << "removeVertex(): ignoring out of range index " << index << ", number of vertices is" << points.size();
+	}else{
+		curveVertices.clear();
+		points.erase(points.begin()+index);
+		flagHasChanged();
+	}
 }
 
 
@@ -151,14 +171,14 @@ void ofPolyline_<T>::flagHasChanged() {
 
 //----------------------------------------------------------
 template<class T>
-vector<T> & ofPolyline_<T>::getVertices(){
+std::vector<T> & ofPolyline_<T>::getVertices(){
     flagHasChanged();
 	return points;
 }
 
 //----------------------------------------------------------
 template<class T>
-const vector<T> & ofPolyline_<T>::getVertices() const {
+const std::vector<T> & ofPolyline_<T>::getVertices() const {
 	return points;
 }
 
@@ -335,10 +355,10 @@ void ofPolyline_<T>::arc(const T & center, float radiusX, float radiusY, float a
     
     // if the delta angle is in the CCW direction OR the start and stop angles are
     // effectively the same adjust the remaining angle to be a be a full rotation
-    if(deltaAngle < 0 || abs(deltaAngle) < epsilon) remainingAngle += M_TWO_PI;
+    if(deltaAngle < 0 || std::abs(deltaAngle) < epsilon) remainingAngle += M_TWO_PI;
     
 	T radii(radiusX, radiusY, 0.f);
-	T point;
+	T point(0);
     
     int currentLUTIndex = 0;
     bool isFirstPoint = true; // special case for the first point
@@ -361,7 +381,7 @@ void ofPolyline_<T>::arc(const T & center, float radiusX, float radiusY, float a
             float firstPointDelta = atan2(sin(d),cos(d)); // negative is in the clockwise direction
             
             // if the are "equal", get the next one CCW
-            if(abs(firstPointDelta) < epsilon) {
+            if(std::abs(firstPointDelta) < epsilon) {
                 currentLUTIndex = clockwise ? (currentLUTIndex + 1) : (currentLUTIndex - 1);
                 firstPointDelta = segmentArcSize; // we start at the next lut point
             }
@@ -453,7 +473,7 @@ ofPolyline_<T> ofPolyline_<T>::getSmoothed(int smoothingSize, float smoothingSha
 	smoothingShape = ofClamp(smoothingShape, 0, 1);
 	
 	// precompute weights and normalization
-	vector<float> weights;
+	std::vector<float> weights;
 	weights.resize(smoothingSize);
 	// side weights
 	for(int i = 1; i < smoothingSize; i++) {
@@ -467,7 +487,7 @@ ofPolyline_<T> ofPolyline_<T>::getSmoothed(int smoothingSize, float smoothingSha
 	for(int i = 0; i < n; i++) {
 		float sum = 1; // center weight
 		for(int j = 1; j < smoothingSize; j++) {
-			T cur;
+			T cur(0);
 			int leftPosition = i - j;
 			int rightPosition = i + j;
 			if(leftPosition < 0 && bClosed) {
@@ -498,12 +518,15 @@ ofPolyline_<T> ofPolyline_<T>::getResampledBySpacing(float spacing) const {
     if(spacing==0 || size() == 0) return *this;
 	ofPolyline_ poly;
     float totalLength = getPerimeter();
-    for(float f=0; f<totalLength; f += spacing) {
+    float f=0;
+    for(f=0; f<=totalLength; f += spacing) {
         poly.lineTo(getPointAtLength(f));
     }
     
     if(!isClosed()) {
-        if(poly.size() > 0) poly.points.back() = points.back();
+        if( f != totalLength ){
+            poly.lineTo(points.back());
+        }
         poly.setClosed(false);
     } else {
         poly.setClosed(true);
@@ -550,7 +573,7 @@ inline T getClosestPointUtil(const T& p1, const T& p2, const T& p3, float* norma
 	if(normalizedPosition != nullptr) {
 		*normalizedPosition = u;
 	}
-	return glm::lerp(toGlm(p1), toGlm(p2), u);
+	return glm::mix(toGlm(p1), toGlm(p2), u);
 }
 
 //----------------------------------------------------------
@@ -568,7 +591,7 @@ T ofPolyline_<T>::getClosestPoint(const T& target, unsigned int* nearestIndex) c
 	}
 	
 	float distance = 0;
-	T nearestPoint;
+	T nearestPoint(0);
 	unsigned int nearest = 0;
 	float normalizedPosition = 0;
 	unsigned int lastPosition = polyline.size() - 1;
@@ -739,13 +762,13 @@ void ofPolyline_<T>::simplify(float tol){
 		return;
 	}
 
-	vector <T> sV;
+	std::vector <T> sV;
 	sV.resize(n);
     
     int    i, k, m, pv;            // misc counters
     float  tol2 = tol * tol;       // tolerance squared
-	vector<T> vt;
-    vector<int> mk;
+    std::vector<T> vt;
+    std::vector<int> mk;
     vt.resize(n);
 	mk.resize(n,0);
     
@@ -780,6 +803,70 @@ void ofPolyline_<T>::simplify(float tol){
 
 //--------------------------------------------------
 template<class T>
+void ofPolyline_<T>::translate(const glm::vec3 & p){
+    for(auto & point : points){
+        point += p;
+    }
+    flagHasChanged();
+}
+
+//--------------------------------------------------
+template<class T>
+void ofPolyline_<T>::translate(const glm::vec2 &p){
+    translate(glm::vec3(p, 0.0));
+}
+
+//--------------------------------------------------
+template<class T>
+void ofPolyline_<T>::rotateDeg(float degrees, const glm::vec3& axis){
+    rotateRad(ofDegToRad(degrees), axis);
+}
+
+//--------------------------------------------------
+template<class T>
+void ofPolyline_<T>::rotateRad(float radians, const glm::vec3& axis){
+    for(auto & point : points){
+        point = glm::rotate(toGlm(point), radians, axis);
+    }
+    flagHasChanged();
+}
+
+//--------------------------------------------------
+template<class T>
+void ofPolyline_<T>::rotate(float degrees, const glm::vec3 &axis){
+    rotateDeg(degrees, axis);
+}
+
+//--------------------------------------------------
+template<class T>
+void ofPolyline_<T>::rotateDeg(float degrees, const glm::vec2& axis){
+    rotateRad(ofDegToRad(degrees), glm::vec3(axis, 0.0));
+}
+
+//--------------------------------------------------
+template<class T>
+void ofPolyline_<T>::rotateRad(float radians, const glm::vec2& axis){
+    rotateRad(radians, glm::vec3(axis, 0.0));
+}
+
+//--------------------------------------------------
+template<class T>
+void ofPolyline_<T>::rotate(float degrees, const glm::vec2 &axis){
+    rotateRad(ofDegToRad(degrees), glm::vec3(axis, 0.0));
+}
+
+//--------------------------------------------------
+template<class T>
+void ofPolyline_<T>::scale(float x, float y){
+    for(auto & point : points){
+        point.x *= x;
+        point.y *= y;
+    }
+    flagHasChanged();
+}
+
+//--------------------------------------------------
+template<class T>
 void ofPolyline_<T>::draw() const{
 	ofGetCurrentRenderer()->draw(*this);
 }
@@ -796,7 +883,6 @@ template<class T>
 T ofPolyline_<T>::getRightVector() const {
     return rightVector;
 }
-
 
 //--------------------------------------------------
 template<class T>
@@ -885,7 +971,7 @@ T ofPolyline_<T>::getPointAtIndexInterpolated(float findex) const {
     getInterpolationParams(findex, i1, i2, t);
 	T leftPoint(points[i1]);
 	T rightPoint(points[i2]);
-	return glm::lerp(toGlm(leftPoint), toGlm(rightPoint), t);
+	return glm::mix(toGlm(leftPoint), toGlm(rightPoint), t);
 }
 
 
@@ -954,7 +1040,7 @@ T ofPolyline_<T>::getRotationAtIndexInterpolated(float findex) const {
     int i1, i2;
     float t;
     getInterpolationParams(findex, i1, i2, t);
-	return glm::lerp(toGlm(getRotationAtIndex(i1)), toGlm(getRotationAtIndex(i2)), t);
+	return glm::mix(toGlm(getRotationAtIndex(i1)), toGlm(getRotationAtIndex(i2)), t);
 }
 
 //--------------------------------------------------
@@ -972,7 +1058,7 @@ T ofPolyline_<T>::getTangentAtIndexInterpolated(float findex) const {
     int i1, i2;
     float t;
     getInterpolationParams(findex, i1, i2, t);
-	return glm::lerp(toGlm(getTangentAtIndex(i1)), toGlm(getTangentAtIndex(i2)), t);
+	return glm::mix(toGlm(getTangentAtIndex(i1)), toGlm(getTangentAtIndex(i2)), t);
 }
 
 //--------------------------------------------------
@@ -990,7 +1076,7 @@ T ofPolyline_<T>::getNormalAtIndexInterpolated(float findex) const {
     int i1, i2;
     float t;
     getInterpolationParams(findex, i1, i2, t);
-	return glm::lerp(toGlm(getNormalAtIndex(i1)), toGlm(getNormalAtIndex(i2)), t);
+	return glm::mix(toGlm(getNormalAtIndex(i1)), toGlm(getNormalAtIndex(i2)), t);
 }
 
 
@@ -1119,49 +1205,49 @@ void ofPolyline_<T>::updateCache(bool bForceUpdate) const {
 
 //--------------------------------------------------
 template<class T>
-typename vector<T>::iterator ofPolyline_<T>::begin(){
+typename std::vector<T>::iterator ofPolyline_<T>::begin(){
 	return points.begin();
 }
 
 //--------------------------------------------------
 template<class T>
-typename vector<T>::iterator ofPolyline_<T>::end(){
+typename std::vector<T>::iterator ofPolyline_<T>::end(){
 	return points.end();
 }
 
 //--------------------------------------------------
 template<class T>
-typename vector<T>::const_iterator ofPolyline_<T>::begin() const{
+typename std::vector<T>::const_iterator ofPolyline_<T>::begin() const{
 	return points.begin();
 }
 
 //--------------------------------------------------
 template<class T>
-typename vector<T>::const_iterator ofPolyline_<T>::end() const{
+typename std::vector<T>::const_iterator ofPolyline_<T>::end() const{
 	return points.end();
 }
 
 //--------------------------------------------------
 template<class T>
-typename vector<T>::reverse_iterator ofPolyline_<T>::rbegin(){
+typename std::vector<T>::reverse_iterator ofPolyline_<T>::rbegin(){
 	return points.rbegin();
 }
 
 //--------------------------------------------------
 template<class T>
-typename vector<T>::reverse_iterator ofPolyline_<T>::rend(){
+typename std::vector<T>::reverse_iterator ofPolyline_<T>::rend(){
 	return points.rend();
 }
 
 //--------------------------------------------------
 template<class T>
-typename vector<T>::const_reverse_iterator ofPolyline_<T>::rbegin() const{
+typename std::vector<T>::const_reverse_iterator ofPolyline_<T>::rbegin() const{
 	return points.rbegin();
 }
 
 //--------------------------------------------------
 template<class T>
-typename vector<T>::const_reverse_iterator ofPolyline_<T>::rend() const{
+typename std::vector<T>::const_reverse_iterator ofPolyline_<T>::rend() const{
 	return points.rend();
 }
 

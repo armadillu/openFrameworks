@@ -1,10 +1,15 @@
-#include "ofBaseTypes.h"
 #include "ofUtils.h"
 #include "ofGLUtils.h"
 #include "ofGLProgrammableRenderer.h"
 #include "of3dGraphics.h"
 #include "ofSoundBuffer.h"
 #include "ofMesh.h"
+#include "ofVideoPlayer.h"
+#include "ofSoundBaseTypes.h"
+#include "ofVideoBaseTypes.h"
+#include "ofGraphicsBaseTypes.h"
+
+using namespace std;
 
 //---------------------------------------------------------------------------
 ofBaseVideoGrabber::~ofBaseVideoGrabber(){
@@ -167,7 +172,7 @@ void ofBaseRenderer::drawPlane(float x, float y, float z, float width, float hei
 	get3dGraphics().drawPlane(x,y,z,width,height);
 }
 
-void ofBaseRenderer::drawPlane(glm::vec3& position, float width, float height) const{
+void ofBaseRenderer::drawPlane(const glm::vec3& position, float width, float height) const{
 	get3dGraphics().drawPlane(position,width,height);
 }
 

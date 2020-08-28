@@ -10,6 +10,8 @@
 #include "ofEvents.h"
 #include "ofGLProgrammableRenderer.h"
 
+using namespace std;
+
 ofxAppEmscriptenWindow * ofxAppEmscriptenWindow::instance = NULL;
 
 // from http://cantuna.googlecode.com/svn-history/r16/trunk/src/screen.cpp
@@ -57,7 +59,7 @@ void ofxAppEmscriptenWindow::setup(const ofGLESWindowSettings & settings){
 	EGLint minorVersion;
 	EGLConfig config;
 	EGLint contextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE, EGL_NONE };
-	EGLint attribList[] =
+	std::vector <EGLint> attribList =
 	   {
 		   EGL_RED_SIZE, EGL_DONT_CARE,
 		   EGL_GREEN_SIZE, EGL_DONT_CARE,
@@ -68,6 +70,18 @@ void ofxAppEmscriptenWindow::setup(const ofGLESWindowSettings & settings){
 		   EGL_SAMPLE_BUFFERS, EGL_DONT_CARE,
 		   EGL_NONE
 	   };
+    
+    // We'll try these depth sizes in order ending with EGL_DONT_CARE if we don't get anything higher.
+    std::vector <EGLint> depthPreference = {24, 16, EGL_DONT_CARE};
+
+    // Find the index for the value EGL_DEPTH_SIZE uses, so we can try a few different values till we get a successful config.
+    int attribListDepthIndex = -1;
+    for(int i = 0; i < attribList.size(); i++){
+        if( attribList[i] == EGL_DEPTH_SIZE ){
+            attribListDepthIndex = i+1;
+            break;
+        }
+    }
 
 	// Get Display
 	display = eglGetDisplay((EGLNativeDisplayType)EGL_DEFAULT_DISPLAY);
@@ -87,14 +101,27 @@ void ofxAppEmscriptenWindow::setup(const ofGLESWindowSettings & settings){
 		ofLogError() << "couldn't get configs";
 		return;
 	}
-	
-	ofLogNotice("ofxAppEmscriptenWindow") << "Got " << numConfigs << " display configs";
+    
+    // Choose the config based on our attribute list
+    // Try higher EGL_DEPTH_SIZE first
+    for(int i = 0; i < depthPreference.size(); i++){
+        // Set EGL_DEPTH_SIZE
+        attribList[attribListDepthIndex] = depthPreference[i];
+        
+        // Try out that depth value
+        if ( !eglChooseConfig(display, &attribList[0], &config, 1, &numConfigs) ){
 
-	// Choose config
-	if ( !eglChooseConfig(display, attribList, &config, 1, &numConfigs) ){
-		ofLogError() << "couldn't choose display";
-		return;
-	}
+            // Finally fail like we did before if no preference works 
+            if( depthPreference[i] == EGL_DONT_CARE ){
+                ofLogError() << "couldn't choose display";
+                return;
+            }
+
+        }else{
+            // Got a good configuration. Stop searching. 
+            break;
+        }
+    }
 
 	// Create a surface
 	surface = eglCreateWindowSurface(display, config, NULL, NULL);
@@ -116,7 +143,7 @@ void ofxAppEmscriptenWindow::setup(const ofGLESWindowSettings & settings){
 		return;
 	}
 
-	setWindowShape(settings.width,settings.height);
+	setWindowShape(settings.getWidth(),settings.getHeight());
 
 	_renderer = make_shared<ofGLProgrammableRenderer>(this);
 	((ofGLProgrammableRenderer*)_renderer.get())->setup(2,0);
@@ -126,7 +153,7 @@ void ofxAppEmscriptenWindow::setup(const ofGLESWindowSettings & settings){
     emscripten_set_mousedown_callback(0,this,1,&mousedown_cb);
     emscripten_set_mouseup_callback(0,this,1,&mouseup_cb);
     emscripten_set_mousemove_callback(0,this,1,&mousemoved_cb);
-    
+
     emscripten_set_touchstart_callback(0,this,1,&touch_cb);
     emscripten_set_touchend_callback(0,this,1,&touch_cb);
     emscripten_set_touchmove_callback(0,this,1,&touch_cb);
@@ -211,7 +238,7 @@ int ofxAppEmscriptenWindow::mousemoved_cb(int eventType, const EmscriptenMouseEv
 }
 
 int ofxAppEmscriptenWindow::touch_cb(int eventType, const EmscriptenTouchEvent* e, void* userData) {
-    
+
         ofTouchEventArgs::Type touchArgsType;
         switch (eventType) {
                     case EMSCRIPTEN_EVENT_TOUCHSTART:
@@ -255,7 +282,7 @@ void ofxAppEmscriptenWindow::setWindowPosition(int x, int y){
 }
 
 void ofxAppEmscriptenWindow::setWindowShape(int w, int h){
-	emscripten_set_canvas_size(w,h);
+    emscripten_set_canvas_element_size(NULL,w,h);
 }
 
 
@@ -268,8 +295,7 @@ glm::vec2 ofxAppEmscriptenWindow::getWindowPosition(){
 glm::vec2 ofxAppEmscriptenWindow::getWindowSize(){
 	int width;
 	int height;
-	int isFullscreen;
-	emscripten_get_canvas_size( &width, &height, &isFullscreen );
+    emscripten_get_canvas_element_size(NULL, &width, &height);
 	return glm::vec2(width,height);
 }
 
@@ -357,4 +383,3 @@ ofCoreEvents & ofxAppEmscriptenWindow::events(){
 shared_ptr<ofBaseRenderer> & ofxAppEmscriptenWindow::renderer(){
 	return _renderer;
 }
-

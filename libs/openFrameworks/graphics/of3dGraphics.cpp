@@ -7,10 +7,6 @@
 //
 
 #include "of3dGraphics.h"
-#include "ofAppRunner.h"
-#include "ofVboMesh.h"
-#include <map>
-
 
 
 enum of3dPrimitiveType {
@@ -29,7 +25,7 @@ of3dGraphics::of3dGraphics(ofBaseRenderer * renderer)
 ,plane(1.0f, 1.0f, 6, 4)
 ,sphere(1.0f, 20)
 ,icoSphere(1.0f, 2)
-,box(1.f, 1.f, 1.f)
+,box(1.f, 1.f, 1.f, 1, 1, 1)
 ,cone( 1.f, 1.f, 9, 3, 2 )
 ,cylinder(1.f, 1.f, 8, 4, 2, true)
 ,boxWireframe(1.f, 1.f, 1.f )
@@ -119,8 +115,7 @@ void of3dGraphics::drawPlane(float x, float y, float width, float height) const{
 
 //----------------------------------------------------------
 void of3dGraphics::drawPlane(float x, float y, float z, float width, float height) const{
-	glm::mat4 m;
-	m = glm::translate(m, glm::vec3(x,y,z));
+	glm::mat4 m = glm::translate(glm::mat4(1.0), glm::vec3(x,y,z));
 	m = glm::scale(m, glm::vec3(width,height,1));
     renderer->pushMatrix();
     renderer->multMatrix(m);
@@ -129,14 +124,13 @@ void of3dGraphics::drawPlane(float x, float y, float z, float width, float heigh
 }
 
 //----------------------------------------------------------
-void of3dGraphics::drawPlane(glm::vec3& position, float width, float height) const{
+void of3dGraphics::drawPlane(const glm::vec3& position, float width, float height) const{
     drawPlane(position.x,position.y,position.z,width, height);
 }
 
 //----------------------------------------------------------
 void of3dGraphics::drawPlane( float width, float height ) const{
-	glm::mat4 m;
-	m = glm::scale(m, glm::vec3(width,height,1));
+	glm::mat4 m = glm::scale(glm::mat4(1.0), glm::vec3(width,height,1));
     renderer->pushMatrix();
     renderer->multMatrix(m);
     renderCached3dPrimitive( plane );
@@ -147,7 +141,7 @@ void of3dGraphics::drawPlane( float width, float height ) const{
 // UV SPHERE //
 //----------------------------------------------------------
 void of3dGraphics::setSphereResolution(int res) {
-    if(ofGetSphereResolution() != res) {
+	if(getSphereResolution() != res) {
        sphere.setResolution(res);
     }
 }
@@ -159,8 +153,7 @@ int of3dGraphics::getSphereResolution() const{
 
 //----------------------------------------------------------
 void of3dGraphics::drawSphere(float x, float y, float z, float radius) const{
-	glm::mat4 m;
-	m = glm::translate(m, glm::vec3(x,y,z));
+	glm::mat4 m = glm::translate(glm::mat4(1.0), glm::vec3(x,y,z));
 	m = glm::scale(m, glm::vec3(radius,radius,radius));
     renderer->pushMatrix();
     renderer->multMatrix(m);
@@ -180,8 +173,7 @@ void of3dGraphics::drawSphere(const glm::vec3& position, float radius) const{
 
 //----------------------------------------------------------
 void of3dGraphics::drawSphere(float radius) const{
-	glm::mat4 m;
-	m = glm::scale(m, glm::vec3(radius,radius,radius));
+	glm::mat4 m = glm::scale(glm::mat4(1.0), glm::vec3(radius,radius,radius));
     renderer->pushMatrix();
     renderer->multMatrix(m);
     renderCached3dPrimitive( sphere );
@@ -192,7 +184,7 @@ void of3dGraphics::drawSphere(float radius) const{
 // ICO SPHERE //
 //----------------------------------------------------------
 void of3dGraphics::setIcoSphereResolution( int res ) {
-    if(ofGetIcoSphereResolution() != res) {
+	if(getIcoSphereResolution() != res) {
         icoSphere.setResolution(res);
     }
 }
@@ -204,8 +196,7 @@ int of3dGraphics::getIcoSphereResolution() const{
 
 //----------------------------------------------------------
 void of3dGraphics::drawIcoSphere(float x, float y, float z, float radius) const{
-	glm::mat4 m;
-	m = glm::translate(m, glm::vec3(x,y,z));
+	glm::mat4 m = glm::translate(glm::mat4(1.0), glm::vec3(x,y,z));
 	m = glm::scale(m, glm::vec3(radius,radius,radius));
     renderer->pushMatrix();
     renderer->multMatrix(m);
@@ -225,8 +216,7 @@ void of3dGraphics::drawIcoSphere(const glm::vec3& position, float radius) const{
 
 //----------------------------------------------------------
 void of3dGraphics::drawIcoSphere(float radius) const{
-	glm::mat4 m;
-	m = glm::scale(m, glm::vec3(radius,radius,radius));
+	glm::mat4 m = glm::scale(glm::mat4(1.0), glm::vec3(radius,radius,radius));
     renderer->pushMatrix();
     renderer->multMatrix(m);
     renderCached3dPrimitive( icoSphere );
@@ -237,7 +227,7 @@ void of3dGraphics::drawIcoSphere(float radius) const{
 // Cylinder //
 //----------------------------------------------------------
 void of3dGraphics::setCylinderResolution( int radiusSegments, int heightSegments, int capSegments ) {
-	if(ofGetCylinderResolution() != glm::vec3{ radiusSegments, heightSegments, capSegments }) {
+	if(getCylinderResolution() != glm::vec3{ radiusSegments, heightSegments, capSegments }) {
         cylinder.setResolution(radiusSegments, heightSegments, capSegments);
     }
 }
@@ -254,8 +244,7 @@ void of3dGraphics::drawCylinder(float x, float y, float radius, float height) co
 
 //----------------------------------------------------------
 void of3dGraphics::drawCylinder(float x, float y, float z, float radius, float height) const{
-	glm::mat4 m;
-	m = glm::translate(m, glm::vec3(x,y,z));
+	glm::mat4 m = glm::translate(glm::mat4(1.0), glm::vec3(x,y,z));
 	m = glm::scale(m, glm::vec3(radius,height,radius));
     renderer->pushMatrix();
     renderer->multMatrix(m);
@@ -270,8 +259,7 @@ void of3dGraphics::drawCylinder(const glm::vec3& position, float radius, float h
 
 //----------------------------------------------------------
 void of3dGraphics::drawCylinder(float radius, float height) const{
-	glm::mat4 m;
-	m = glm::scale(m, glm::vec3(radius,height,radius));
+	glm::mat4 m = glm::scale(glm::mat4(1.0), glm::vec3(radius,height,radius));
     renderer->pushMatrix();
     renderer->multMatrix(m);
     renderCached3dPrimitive( cylinder );
@@ -283,7 +271,7 @@ void of3dGraphics::drawCylinder(float radius, float height) const{
 // CONE //
 //----------------------------------------------------------
 void of3dGraphics::setConeResolution( int radiusSegments, int heightSegments, int capSegments){
-	if(ofGetConeResolution() != glm::vec3( radiusSegments, heightSegments, capSegments )) {
+	if(getConeResolution() != glm::vec3( radiusSegments, heightSegments, capSegments )) {
         cone.setResolution(radiusSegments, heightSegments, capSegments);
     }
 }
@@ -295,8 +283,7 @@ glm::vec3 of3dGraphics::getConeResolution() const{
 
 //----------------------------------------------------------
 void of3dGraphics::drawCone(float x, float y, float z, float radius, float height) const{
-	glm::mat4 m;
-	m = glm::translate(m, glm::vec3(x,y,z));
+	glm::mat4 m = glm::translate(glm::mat4(1.0), glm::vec3(x,y,z));
 	m = glm::scale(m, glm::vec3(radius,height,radius));
     renderer->pushMatrix();
     renderer->multMatrix(m);
@@ -316,8 +303,7 @@ void of3dGraphics::drawCone(const glm::vec3& position, float radius, float heigh
 
 //----------------------------------------------------------
 void of3dGraphics::drawCone(float radius, float height) const{
-	glm::mat4 m;
-	m = glm::scale(m, glm::vec3(radius,height,radius));
+	glm::mat4 m = glm::scale(glm::mat4(1.0), glm::vec3(radius,height,radius));
     renderer->pushMatrix();
     renderer->multMatrix(m);
     renderCached3dPrimitive( cone );
@@ -334,9 +320,9 @@ void of3dGraphics::setBoxResolution( int res ) {
 
 //----------------------------------------------------------
 void of3dGraphics::setBoxResolution( int resWidth, int resHeight, int resDepth ) {
-	if(ofGetBoxResolution() != glm::vec3( resWidth, resHeight, resDepth )) {
+	if(getBoxResolution() != glm::vec3( resWidth, resHeight, resDepth )) {
         box.setResolution(resWidth, resHeight, resDepth);
-    }
+	}
 }
 
 //----------------------------------------------------------
@@ -346,13 +332,12 @@ glm::vec3 of3dGraphics::getBoxResolution() const{
 
 //----------------------------------------------------------
 void of3dGraphics::drawBox( float x, float y, float z, float width, float height, float depth) const{
-	glm::mat4 m;
-	m = glm::translate(m, glm::vec3(x,y,z));
+	glm::mat4 m = glm::translate(glm::mat4(1.0), glm::vec3(x,y,z));
 	m = glm::scale(m, glm::vec3(width,height,depth));
 
     renderer->pushMatrix();
     renderer->multMatrix(m);
-    if(renderer->getFillMode() == OF_FILLED) {
+	if(renderer->getFillMode() == OF_FILLED || box.getResolution() != glm::vec3(1,1,1)) {
         renderCached3dPrimitive( box );
     } else {
         renderCached3dPrimitive( boxWireframe );
@@ -387,8 +372,7 @@ void of3dGraphics::drawBox( float width, float height, float depth ) const{
 
 
 void of3dGraphics::drawAxis(float size) const{
-	glm::mat4 m;
-	m = glm::scale(m, glm::vec3(size,size,size));
+	glm::mat4 m = glm::scale(glm::mat4(1.0), glm::vec3(size,size,size));
 	renderer->pushMatrix();
     renderer->multMatrix(m);
     renderCached3dPrimitive( axis );
@@ -500,11 +484,13 @@ void of3dGraphics::drawArrow(const glm::vec3& start, const glm::vec3& end, float
 	//draw line
 	renderer->drawLine(start.x,start.y,start.z, end.x,end.y,end.z);
 
-	//draw cone
-	glm::mat4 m = glm::mat4_cast(glm::rotation(glm::vec3(0.f,1.f,0.f), start-end));
-	m = glm::translate(m, end);
+	// Note that `glm::rotation` requires its parameters to be normalized `glm::vec3`s
+	const glm::mat4 cone_rotation    = glm::mat4_cast(glm::rotation(glm::vec3(0,1,0), glm::normalize(start-end)));
+	const glm::mat4 cone_translation = glm::translate(end);
+	const glm::mat4 cone_transform   = cone_translation * cone_rotation;
+
 	renderer->pushMatrix();
-	renderer->multMatrix(m);
+	renderer->multMatrix(cone_transform);
     drawCone(headSize, headSize*2.);
     renderer->popMatrix();
 }
@@ -568,7 +554,7 @@ void ofDrawPlane(float x, float y, float z, float width, float height){
 }
 
 //----------------------------------------------------------
-void ofDrawPlane(glm::vec3& position, float width, float height){
+void ofDrawPlane(const glm::vec3& position, float width, float height){
 	ofGetCurrentRenderer()->drawPlane(position,width,height);
 }
 

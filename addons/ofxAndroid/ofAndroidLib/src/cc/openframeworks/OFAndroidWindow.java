@@ -25,12 +25,14 @@ class OFEGLConfigChooser implements GLSurfaceView.EGLConfigChooser {
     }
     
     public static void setGLESVersion(int version){
+		GLES_VERSION = version; 
+		
     	if(version==1) EGL_OPENGL_ES_BIT=1;
     	else EGL_OPENGL_ES_BIT=4;
     }
     
     public static int getGLESVersion(){
-    	return EGL_OPENGL_ES_BIT==1?1:2;
+    	return GLES_VERSION;
     }
 
     /* This EGL config specification is used to specify 1.x rendering.
@@ -39,6 +41,7 @@ class OFEGLConfigChooser implements GLSurfaceView.EGLConfigChooser {
      */
     private static boolean DEBUG = false;
     private static int EGL_OPENGL_ES_BIT = 1;
+    private static int GLES_VERSION = 1;
     private static int[] s_configAttribs2 =
     {
         EGL10.EGL_RED_SIZE, 4,
@@ -220,8 +223,8 @@ class OFGLSurfaceView extends GLSurfaceView{
 	public OFGLSurfaceView(Context context) {
         super(context);
         mRenderer = new OFAndroidWindow(getWidth(),getHeight());
-        if(OFEGLConfigChooser.getGLESVersion()==2){
-        	setEGLContextClientVersion(2);
+        if(OFEGLConfigChooser.getGLESVersion()>=2){
+        	setEGLContextClientVersion(OFEGLConfigChooser.getGLESVersion());
         }
         getHolder().setFormat( PixelFormat.OPAQUE );
         OFEGLConfigChooser configChooser = new OFEGLConfigChooser(8,8,8,0,16,0);
@@ -233,8 +236,8 @@ class OFGLSurfaceView extends GLSurfaceView{
 	public OFGLSurfaceView(Context context,AttributeSet attributes) {
         super(context,attributes);
         mRenderer = new OFAndroidWindow(getWidth(),getHeight());
-        if(OFEGLConfigChooser.getGLESVersion()==2){
-        	setEGLContextClientVersion(2);
+        if(OFEGLConfigChooser.getGLESVersion()>=2){
+        	setEGLContextClientVersion(OFEGLConfigChooser.getGLESVersion());
         }
         getHolder().setFormat( PixelFormat.OPAQUE );
         OFEGLConfigChooser configChooser = new OFEGLConfigChooser(8,8,8,0,16,0);
@@ -242,11 +245,17 @@ class OFGLSurfaceView extends GLSurfaceView{
         setRenderer(mRenderer);
     }
 
+// NOTE - The following has been removed because it is not a good way to determine that the opengl context was destroyed with its resources.
+//        The Android SurfaceView source code is a bit confusing  - there are many times when some kind of surface is beign destroyed (eg. during window resize),
+//            so it is not that surprising, that not every surfaceDestoyed callback means what we might think it means.
+//        We don't need this callback that much anyways, the renderer does not call render callbacks when gl context is invalid, so the OFAndroidWindow.onSurfaceCreated callback should be enought for us to make things work.
+/*
     @Override
 	public void surfaceDestroyed(SurfaceHolder holder) {
     	super.surfaceDestroyed(holder);
 		OFAndroid.onSurfaceDestroyed();
 	}
+*/
     
     boolean isSetup(){
     	return mRenderer.isSetup();
@@ -265,10 +274,19 @@ class OFAndroidWindow implements GLSurfaceView.Renderer {
 	@Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
 		Log.i("OF","onSurfaceCreated");
+		// notify that old surface was destroyed
+		if(this.has_surface) {
+			OFAndroid.onSurfaceDestroyed();
+			this.has_surface = false;
+		}
+		
+		// notify that new surface was created
+		this.has_surface = true;
 		OFAndroid.onSurfaceCreated();
 		Activity activity = OFAndroidLifeCycle.getActivity();
 		if(OFActivity.class.isInstance(activity))
 			((OFActivity)activity).onGLSurfaceCreated();
+		
 		return;
     }
 	
@@ -317,4 +335,5 @@ class OFAndroidWindow implements GLSurfaceView.Renderer {
 
     private static boolean setup;
     private int w,h;
+    private boolean has_surface = false;
 }

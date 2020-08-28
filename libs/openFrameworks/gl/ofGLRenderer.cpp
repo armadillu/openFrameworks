@@ -12,6 +12,9 @@
 #include "ofCamera.h"
 #include "ofTrueTypeFont.h"
 #include "ofNode.h"
+#include "ofVideoBaseTypes.h"
+
+using namespace std;
 
 const string ofGLRenderer::TYPE="GL";
 
@@ -45,6 +48,7 @@ void ofGLRenderer::setup(){
 	GLint currentFrameBuffer;
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &currentFrameBuffer);
 	defaultFramebufferId = currentFrameBuffer;
+    currentFramebufferId = defaultFramebufferId;
 #endif
 	setupGraphicDefaults();
 	viewport();
@@ -452,21 +456,20 @@ void ofGLRenderer::unbind(const ofShader & shader){
 	glUseProgram(0);
 }
 
-
 //----------------------------------------------------------
-void ofGLRenderer::begin(const ofFbo & fbo, ofFboBeginMode mode){
+void ofGLRenderer::begin(const ofFbo & fbo, ofFboMode mode){
 	pushView();
 	pushStyle();
-    if(mode & ofFboBeginMode::MatrixFlip){
+    if(mode & OF_FBOMODE_MATRIXFLIP){
         matrixStack.setRenderSurface(fbo);
     }else{
         matrixStack.setRenderSurfaceNoMatrixFlip(fbo);
     }
 	viewport();
-    if(mode & ofFboBeginMode::Perspective){
+    if(mode & OF_FBOMODE_PERSPECTIVE){
 		setupScreenPerspective();
 	}else{
-		glm::mat4 m;
+		glm::mat4 m = glm::mat4(1.0);
 		glGetFloatv(GL_PROJECTION_MATRIX, glm::value_ptr(m));
 		m =  matrixStack.getOrientationMatrixInverse() * m;
 		ofMatrixMode currentMode = matrixStack.getCurrentMatrixMode();
@@ -583,7 +586,7 @@ void ofGLRenderer::bind(const ofTexture & texture, int location){
 	if(ofGetUsingNormalizedTexCoords()) {
 		matrixMode(OF_MATRIX_TEXTURE);
 		pushMatrix();
-		glm::mat4 m;
+		glm::mat4 m = glm::mat4(1.0);
 
 #ifndef TARGET_OPENGLES
 		if(texture.texData.textureTarget == GL_TEXTURE_RECTANGLE_ARB)
@@ -637,7 +640,7 @@ void ofGLRenderer::unbind(const ofCamera & camera){
 void ofGLRenderer::pushView() {
 	getCurrentViewport();
 
-	glm::mat4 m;
+	glm::mat4 m = glm::mat4(1.0);
 	ofMatrixMode matrixMode = matrixStack.getCurrentMatrixMode();
 	glGetFloatv(GL_PROJECTION_MATRIX,glm::value_ptr(m));
 	matrixStack.matrixMode(OF_MATRIX_PROJECTION);
@@ -942,7 +945,7 @@ void ofGLRenderer::loadMatrix (const float *m){
  *	@param	matrixMode_  Which matrix mode to query
  */
 glm::mat4 ofGLRenderer::getCurrentMatrix(ofMatrixMode matrixMode_) const {
-	glm::mat4 mat;
+	glm::mat4 mat = glm::mat4(1.0);
 	switch (matrixMode_) {
 		case OF_MATRIX_MODELVIEW:
 			glGetFloatv(GL_MODELVIEW_MATRIX, glm::value_ptr(mat));
@@ -968,7 +971,7 @@ glm::mat4 ofGLRenderer::getCurrentOrientationMatrix() const {
 //----------------------------------------------------------
 void ofGLRenderer::multMatrix (const glm::mat4 & m){
 	if(matrixStack.getCurrentMatrixMode()==OF_MATRIX_PROJECTION){
-		glm::mat4 current;
+		glm::mat4 current = glm::mat4(1.0);
 		glGetFloatv(GL_PROJECTION_MATRIX, glm::value_ptr(current));
 		if(matrixStack.customMatrixNeedsFlip()){
 			current = glm::scale(current, glm::vec3(1,-1,1));
@@ -1595,12 +1598,12 @@ void ofGLRenderer::drawString(string textString, float x, float y, float z) cons
 
 			rViewport = getCurrentViewport();
 
-			glm::mat4 modelview, projection;
+			glm::mat4 modelview = glm::mat4(1.0), projection = glm::mat4(1.0);
 			glGetFloatv(GL_MODELVIEW_MATRIX, glm::value_ptr(modelview));
 			glGetFloatv(GL_PROJECTION_MATRIX, glm::value_ptr(projection));
-			auto mat = matrixStack.getOrientationMatrixInverse() * projection * modelview;
-			auto dScreen4 = mat * glm::vec4(x,y,z,1.0);
-			auto dScreen = dScreen4.xyz() / dScreen4.w;
+			glm::mat4 mat = matrixStack.getOrientationMatrixInverse() * projection * modelview;
+			glm::vec4 dScreen4 = mat * glm::vec4(x,y,z,1.0);
+			glm::vec3 dScreen = glm::vec3(dScreen4) / dScreen4.w;
 			dScreen += glm::vec3(1.0) ;
 			dScreen *= 0.5;
 
@@ -1903,28 +1906,21 @@ void ofGLRenderer::saveFullViewport(ofPixels & pixels){
 
 //----------------------------------------------------------
 void ofGLRenderer::saveScreen(int x, int y, int w, int h, ofPixels & pixels){
-
 	int sh = getViewportHeight();
 
 
 	#ifndef TARGET_OPENGLES
-	ofBufferObject buffer;
-	pixels.allocate(w, h, OF_PIXELS_RGB);
-	buffer.allocate(pixels.size(),GL_STATIC_READ);
 	if(isVFlipped()){
 		y = sh - y;
 		y -= h; // top, bottom issues
 	}
+	auto pixelFormat = OF_PIXELS_BGRA;
+	pixels.allocate(w, h, pixelFormat);
+	auto glFormat = ofGetGLFormat(pixels);
 
-	buffer.bind(GL_PIXEL_PACK_BUFFER);
-	glReadPixels(x, y, w, h, ofGetGlFormat(pixels), GL_UNSIGNED_BYTE, 0); // read the memory....
-	buffer.unbind(GL_PIXEL_PACK_BUFFER);
-	unsigned char * p = buffer.map<unsigned char>(GL_READ_ONLY);
-	ofPixels src;
-	src.setFromExternalPixels(p,w,h,OF_PIXELS_RGB);
-	src.mirrorTo(pixels,true,false);
-	buffer.unmap();
 
+	glReadPixels(x, y, w, h, glFormat, GL_UNSIGNED_BYTE, pixels.begin()); // read the memory....
+	pixels.mirror(true, false);
 	#else
 
 	int sw = getViewportWidth();
