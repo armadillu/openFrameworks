@@ -133,3 +133,6 @@ Desktop.ini
 
 .mailmap
 /apps*/
+/examples/*/*/addons.make
+/examples/*/*/config.make
+/examples/*/*/Makefile
