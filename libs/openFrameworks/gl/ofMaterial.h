@@ -233,9 +233,10 @@ public:
 private:
 	void initShaders(ofGLProgrammableRenderer & renderer) const;
 	const ofShader & getShader(int textureTarget, bool geometryHasColor, ofGLProgrammableRenderer & renderer) const;
+public: //oriol making these public to be able to override materials with shaders
 	void updateMaterial(const ofShader & shader,ofGLProgrammableRenderer & renderer) const;
 	void updateLights(const ofShader & shader,ofGLProgrammableRenderer & renderer) const;
-
+private:
 	ofMaterialSettings data;
 
 	struct Shaders{
