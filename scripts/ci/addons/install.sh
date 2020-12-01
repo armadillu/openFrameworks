@@ -7,7 +7,7 @@ cd $OF_ROOT
 if [ -f scripts/ci/$TARGET/install.sh ]; then
     scripts/ci/$TARGET/install.sh;
 fi
-if [ "$OF_BRANCH" == "master" ]; then
+if [ "$OF_BRANCH" == "master" ] || [ "$OF_BRANCH" == "main" ]; then
     if [ "$TARGET" == "linux64" ]; then
         # sudo apt-add-repository ppa:ubuntu-toolchain-r/test
         # sudo apt-get update
