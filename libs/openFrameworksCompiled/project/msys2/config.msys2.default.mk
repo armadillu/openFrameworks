@@ -106,10 +106,10 @@ PLATFORM_CFLAGS += -Wall
 PLATFORM_CFLAGS += -fexceptions
 
 # Architecture / Machine Flags (http://gcc.gnu.org/onlinedocs/gcc/Submodel-Options.html)
-ifeq ($(shell gcc -march=native -S -o /dev/null -xc /dev/null 2> /dev/null; echo $$?),0)
-	PLATFORM_CFLAGS += -march=native
-	PLATFORM_CFLAGS += -mtune=native
-endif
+#ifeq ($(shell gcc -march=native -S -o /dev/null -xc /dev/null 2> /dev/null; echo $$?),0)
+#	PLATFORM_CFLAGS += -march=native
+#	PLATFORM_CFLAGS += -mtune=native
+#endif
 
 
 ################################################################################
@@ -317,7 +317,7 @@ copy_dlls:
 	@rm dlllist
 	
 afterplatform: $(TARGET_NAME)
-	@if [ -e $(OF_LIBS_PATH)/*/lib/$(PLATFORM_LIB_SUBPATH)/*.$(SHARED_LIB_EXTENSION) ]; then cp $(OF_LIBS_PATH)/*/lib/$(PLATFORM_LIB_SUBPATH)/*.$(SHARED_LIB_EXTENSION) bin/; fi
+	-cp ${OF_LIBS_PATH}/*/lib/${PLATFORM_LIB_SUBPATH}/*.${SHARED_LIB_EXTENSION} bin/ ; true
 	@echo
 	@echo "     compiling done"
 	@echo "     to launch the application"

@@ -210,9 +210,9 @@ ifndef PROJECT_OPTIMIZATION_CFLAGS_RELEASE
 	# RELEASE Debugging options (http://gcc.gnu.org/onlinedocs/gcc/Debugging-Options.html)
 	PLATFORM_OPTIMIZATION_CFLAGS_RELEASE = -O3
 
-	ifneq ($(LINUX_ARM),1)
-		PLATFORM_OPTIMIZATION_CFLAGS_RELEASE += -march=native -mtune=native
-	endif
+	#ifneq ($(LINUX_ARM),1)
+	#	PLATFORM_OPTIMIZATION_CFLAGS_RELEASE += -march=native -mtune=native
+	#endif
 else
 	PLATFORM_OPTIMIZATION_CFLAGS_RELEASE = $(PROJECT_OPTIMIZATION_CFLAGS_RELEASE)
 endif
@@ -270,7 +270,7 @@ PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/curl/%
 PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/uriparser/%
 
 ifeq ($(USE_FMOD),0)
-	PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/fmodex/%
+	PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/fmod/%
 	PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/openFrameworks/sound/ofFmodSoundPlayer.cpp
 endif
 
