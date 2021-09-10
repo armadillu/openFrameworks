@@ -136,3 +136,4 @@ Desktop.ini
 /examples/*/*/addons.make
 /examples/*/*/config.make
 /examples/*/*/Makefile
+projectGenerator*/
