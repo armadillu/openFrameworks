@@ -3,13 +3,11 @@
 #ifndef OF_POLYLINE_H
 #define OF_POLYLINE_H
 
-#include "ofConstants.h"
+#define GLM_FORCE_CTOR_INIT
+#define GLM_ENABLE_EXPERIMENTAL
 #include "glm/fwd.hpp"
 #include <deque>
-
-#include "ofVec2f.h"
-#include "ofVec3f.h"
-#include "ofVec4f.h"
+#include <vector>
 
 /// \file
 /// ofPolyLine allows you to combine multiple points into a single vector data
@@ -25,7 +23,7 @@
 /// 	float r = (2-2*sin(i) + sin(i)*sqrt(abs(cos(i))) / (sin(i)+1.4)) * -80;
 /// 	float x = ofGetWidth()/2 + cos(i) * r;
 /// 	float y = ofGetHeight()/2 + sin(i) * r;
-/// 	line.addVertex(ofVec2f(x,y));
+/// 	line.addVertex(glm::vec2(x,y));
 /// 	i+=0.005*HALF_PI*0.5;
 /// }
 /// line.close(); // close the shape
@@ -59,13 +57,15 @@ class ofRectangle;
 template<class T>
 class ofPolyline_ {
 public:
+    using VertexType = T;
+    
 	/// \name Constructors
 	/// \{
 
 	/// \brief Creates an ofPolyline.
 	ofPolyline_();
 
-	/// \brief Creates an ofPolyline from a vector of ofVec2f or T objects.
+	/// \brief Creates an ofPolyline from a vector of glm::vec2 or T objects.
 	ofPolyline_(const std::vector<T>& verts);
 
 	static ofPolyline_ fromRectangle(const ofRectangle& rect);
@@ -369,13 +369,15 @@ public:
 
 	void rotateDeg(float degrees, const glm::vec3& axis);
 	void rotateRad(float radians, const glm::vec3& axis);
-	OF_DEPRECATED_MSG("Use Deg/Rad versions.", void rotate(float degrees, const glm::vec3& axis));
+	[[deprecated("Use Deg/Rad versions.")]]
+	void rotate(float degrees, const glm::vec3& axis);
 
 	void translate(const glm::vec3 & p);
 
 	void rotateDeg(float degrees, const glm::vec2& axis);
 	void rotateRad(float radians, const glm::vec2& axis);
-	OF_DEPRECATED_MSG("Use Deg/Rad versions.", void rotate(float degrees, const glm::vec2& axis));
+	[[deprecated("Use Deg/Rad versions.")]]
+	void rotate(float degrees, const glm::vec2& axis);
 
 	void translate(const glm::vec2 & p);
 
@@ -473,11 +475,13 @@ public:
 	T getPointAtIndexInterpolated(float findex) const;
 
 	/// \brief Get angle (degrees) of the path at index
-	OF_DEPRECATED_MSG("Use Deg/Rad versions.", float getAngleAtIndex(int index) const);
+	[[deprecated("Use Deg/Rad versions.")]]
+	float getAngleAtIndex(int index) const;
 
 	/// \brief Get angle (degrees) at interpolated index (interpolated between
 	/// neighboring indices)
-	OF_DEPRECATED_MSG("Use Deg/Rad versions.", float getAngleAtIndexInterpolated(float findex) const);
+	[[deprecated("Use Deg/Rad versions.")]]
+	float getAngleAtIndexInterpolated(float findex) const;
 
 	/// \brief Get rotation vector at index (magnitude is sine of angle)
 	T getRotationAtIndex(int index) const;

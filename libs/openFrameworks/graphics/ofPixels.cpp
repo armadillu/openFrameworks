@@ -1,9 +1,11 @@
-#include "ofPixels.h"
 #include "ofGraphicsConstants.h"
+#include "ofPixels.h"
+#include "ofColor.h"
+
+#define GLM_FORCE_CTOR_INIT
+#define GLM_ENABLE_EXPERIMENTAL
 #include "glm/common.hpp"
 #include <cstring>
-
-using namespace std;
 
 static ofImageType getImageTypeFromChannels(size_t channels){
 	switch(channels){
@@ -213,7 +215,7 @@ static ofImageType ofImageTypeFromPixelFormat(ofPixelFormat pixelFormat){
 	}
 }
 
-string ofToString(ofPixelFormat pixelFormat){
+std::string ofToString(ofPixelFormat pixelFormat){
 	switch(pixelFormat){
 		case OF_PIXELS_RGB:
 			return "RGB";

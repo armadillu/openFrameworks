@@ -1,6 +1,9 @@
 #include "ofVec2f.h"
 #include "ofVec3f.h"
 #include "ofVec4f.h"
+
+#define GLM_FORCE_CTOR_INIT
+#define GLM_ENABLE_EXPERIMENTAL
 #include "glm/vec3.hpp"
 #include "glm/vec4.hpp"
 

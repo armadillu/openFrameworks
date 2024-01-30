@@ -1,11 +1,21 @@
 #pragma once
-#include <stdint.h>
 
-//-------------------------------
+// version: ------------------------
 #define OF_VERSION_MAJOR 0
-#define OF_VERSION_MINOR 11
-#define OF_VERSION_PATCH 2
+#define OF_VERSION_MINOR 12
+#define OF_VERSION_PATCH 0
 #define OF_VERSION_PRE_RELEASE "master"
+
+// core: ---------------------------
+#include <stdint.h>
+#include <cstdio>
+#include <cstdlib>
+#include <string>
+#include <cstring>
+#include <iostream>
+#include <vector>
+#include <memory>
+#include <functional>
 
 // Set to 1 for compatibility with old projects using ofVec instead of glm
 #ifndef OF_USE_LEGACY_VECTOR_MATH
@@ -14,11 +24,6 @@
 
 // This enables glm's old behavior of initializing with non garbage values
 #define GLM_FORCE_CTOR_INIT
-
-// Set to 1 to use std filesystem instead of boost's
-#ifndef OF_USING_STD_FS
-#define OF_USING_STD_FS 0
-#endif
 
 //-------------------------------
 
@@ -44,7 +49,8 @@ enum ofTargetPlatform{
 	OF_TARGET_LINUXARMV7L,
 	/// \brief Compiled to javascript using Emscripten.
 	/// \sa https://github.com/kripken/emscripten
-	OF_TARGET_EMSCRIPTEN
+	OF_TARGET_EMSCRIPTEN,
+	OF_TARGET_LINUXAARCH64
 };
 
 
@@ -53,6 +59,7 @@ enum ofTargetPlatform{
 #endif
 
 
+// FIXME: not used anymore in OF Core. Only kept for addons compatibility - 20231206
 // Cross-platform deprecation warning
 #ifdef __GNUC__
 	// clang also has this defined. deprecated(message) is only for gcc>=4.5
@@ -81,6 +88,7 @@ enum ofTargetPlatform{
 // 		http://www.ogre3d.org/docs/api/html/OgrePlatform_8h-source.html
 
 #if defined( __WIN32__ ) || defined( _WIN32 )
+	#define OF_OS_WINDOWS
 	#define TARGET_WIN32
 	#if defined(_MSC_VER)
 		#define TARGET_WINVS
@@ -91,7 +99,7 @@ enum ofTargetPlatform{
 #elif defined( __APPLE_CC__)
     #define __ASSERT_MACROS_DEFINE_VERSIONS_WITHOUT_UNDERSCORES 0
     #include <TargetConditionals.h>
-	#if (TARGET_OS_IPHONE || TARGET_OS_IOS || TARGET_OS_SIMULATOR || TARGET_OS_IPHONE_SIMULATOR) && !TARGET_OS_TV && !TARGET_OS_WATCH
+	#if (TARGET_OS_IPHONE || TARGET_OS_IOS || TARGET_OS_SIMULATOR || TARGET_IPHONE_SIMULATOR) && !TARGET_OS_TV && !TARGET_OS_WATCH
         #define TARGET_OF_IPHONE
         #define TARGET_OF_IOS
         #define TARGET_OPENGLES
@@ -119,7 +127,6 @@ enum ofTargetPlatform{
 #elif defined(__EMSCRIPTEN__)
 	#define TARGET_EMSCRIPTEN
 	#define TARGET_OPENGLES
-	#define TARGET_NO_THREADS
 	#define TARGET_PROGRAMMABLE_GL
 	#define TARGET_IMPLEMENTS_URL_LOADER
 #else
@@ -191,6 +198,10 @@ enum ofTargetPlatform{
 	#if defined(__LITTLE_ENDIAN__)
 		#define TARGET_LITTLE_ENDIAN		// intel cpu
 	#endif
+
+	#if defined(__OBJC__) && !__has_feature(objc_arc)
+		#warning "Please enable ARC (Automatic Reference Counting) at the project level"
+	#endif
 #endif
 
 #ifdef TARGET_LINUX
@@ -241,6 +252,11 @@ enum ofTargetPlatform{
 
 
 	#define TARGET_LITTLE_ENDIAN		// arm cpu
+
+	#if defined(__OBJC__) && !__has_feature(objc_arc)
+		#error "Please enable ARC (Automatic Reference Counting) at the project level"
+	#endif
+
 #endif
 
 #ifdef TARGET_ANDROID
@@ -257,8 +273,14 @@ enum ofTargetPlatform{
 #endif
 
 #ifdef TARGET_EMSCRIPTEN
+	#define GL_GLEXT_PROTOTYPES
+	#include <GLES/gl.h>
+	#include <GLES/glext.h>
 	#include <GLES2/gl2.h>
 	#include <GLES2/gl2ext.h>
+	#include <GLES3/gl3.h>
+	#include <GL/glew.h>
+
 	#include "EGL/egl.h"
 	#include "EGL/eglext.h"
 
@@ -272,16 +294,6 @@ typedef TESSindex ofIndexType;
 
 #define OF_EXIT_APP(val)		std::exit(val);
 
-
-// core: ---------------------------
-#include <cstdio>
-#include <cstdlib>
-#include <string>
-#include <cstring>
-#include <iostream>
-#include <vector>
-#include <memory>
-#include <functional>
 
 
 //------------------------------------------------ capture
@@ -334,7 +346,7 @@ typedef TESSindex ofIndexType;
 
 //------------------------------------------------  video player
 // check if any video player system is already defined from the compiler
-#if !defined(OF_VIDEO_PLAYER_GSTREAMER) && !defined(OF_VIDEO_PLAYER_IOS) && !defined(OF_VIDEO_PLAYER_DIRECTSHOW) && !defined(OF_VIDEO_PLAYER_QUICKTIME) && !defined(OF_VIDEO_PLAYER_AVFOUNDATION) && !defined(OF_VIDEO_PLAYER_EMSCRIPTEN)
+#if !defined(OF_VIDEO_PLAYER_GSTREAMER) && !defined(OF_VIDEO_PLAYER_IOS) && !defined(OF_VIDEO_PLAYER_DIRECTSHOW) && !defined(OF_VIDEO_PLAYER_MEDIA_FOUNDATION) && !defined(OF_VIDEO_PLAYER_QUICKTIME) && !defined(OF_VIDEO_PLAYER_AVFOUNDATION) && !defined(OF_VIDEO_PLAYER_EMSCRIPTEN)
     #ifdef TARGET_LINUX
         #define OF_VIDEO_PLAYER_GSTREAMER
     #elif defined(TARGET_ANDROID)
@@ -342,7 +354,11 @@ typedef TESSindex ofIndexType;
     #elif defined(TARGET_OF_IOS)
         #define OF_VIDEO_PLAYER_IOS
 	#elif defined(TARGET_WIN32)
-        #define OF_VIDEO_PLAYER_DIRECTSHOW
+            #ifdef _MSC_VER //use MF Foundation player for VS as mingw doesn't have needed symbols
+	        #define OF_VIDEO_PLAYER_MEDIA_FOUNDATION
+            #else
+	        #define OF_VIDEO_PLAYER_DIRECTSHOW
+            #endif
     #elif defined(TARGET_OSX)
         //for 10.8 and 10.9 users we use AVFoundation, for 10.7 we use QTKit, for 10.6 users we use QuickTime
         #ifndef MAC_OS_X_VERSION_10_7
@@ -373,9 +389,27 @@ typedef TESSindex ofIndexType;
 	#endif
 #endif
 
+#if (defined(_M_ARM64) || defined(_M_ARM64EC)) && defined(TARGET_WIN32)
+	#undef USE_FMOD // No FMOD lib for ARM64 yet
+	#define OF_NO_FMOD
+	#include <arm64_neon.h> // intrinsics SIMD on https://learn.microsoft.com/en-us/cpp/intrinsics/arm64-intrinsics?view=msvc-170
+#endif
+
 //------------------------------------------------ soundplayer
+//MAC_OS and IOS uncomment to enable AVEnginePlayer
+#ifdef OF_NO_FMOD
+    #undef USE_FMOD
+    #if defined(TARGET_OF_IOS) || defined(TARGET_OSX)
+        #define OF_SOUND_PLAYER_AV_ENGINE
+    #elif defined(TARGET_WIN32)
+		#define OF_SOUND_PLAYER_MEDIA_FOUNDATION
+	#endif
+#endif
+
 // check if any soundplayer api is defined from the compiler
-#if !defined(OF_SOUND_PLAYER_QUICKTIME) && !defined(OF_SOUND_PLAYER_FMOD) && !defined(OF_SOUND_PLAYER_OPENAL) && !defined(OF_SOUND_PLAYER_EMSCRIPTEN)
+
+#if !defined(TARGET_NO_SOUND)
+#if !defined(OF_SOUND_PLAYER_QUICKTIME) && !defined(OF_SOUND_PLAYER_FMOD) && !defined(OF_SOUND_PLAYER_OPENAL) && !defined(OF_SOUND_PLAYER_EMSCRIPTEN) && !defined(OF_SOUND_PLAYER_AV_ENGINE) && !defined(OF_SOUND_PLAYER_MEDIA_FOUNDATION)
   #ifdef TARGET_OF_IOS
   	#define OF_SOUND_PLAYER_IPHONE
   #elif defined(TARGET_LINUX) || defined(TARGET_MINGW)
@@ -387,11 +421,6 @@ typedef TESSindex ofIndexType;
   #endif
 #endif
 
-//------------------------------------------------ c++11
-// check if the compiler supports c++11. vs hasn't updated the value
-// of __cplusplus so we need to check for vs >= 2012 (1700)
-#if __cplusplus>=201103 || _MSC_VER >= 1700
-#define HAS_CPP11 1
 #endif
 
 //------------------------------------------------ thread local storage
@@ -407,79 +436,116 @@ typedef TESSindex ofIndexType;
 	#endif
 #endif
 
-//------------------------------------------------ make_unique
-// This is a helper method for make unique on platforms that support C++11, but not C++14.
-#if !defined(NO_OF_MAKE_UNIQUE) && (defined(_MSC_VER) && _MSC_VER < 1800) || (!defined(_MSC_VER) && __cplusplus <= 201103L)
-
-// Implementation for C++11 platforms that do not yet have std::make_unique.
-// Implementation from http://stackoverflow.com/a/13512344/1518329
-namespace std {
 
 
-template <typename T, typename... Args>
-std::unique_ptr<T> make_unique_helper(std::false_type, Args&&... args) {
-	return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-}
-
-template <typename T, typename... Args>
-std::unique_ptr<T> make_unique_helper(std::true_type, Args&&... args) {
-	static_assert(std::extent<T>::value == 0,
-				  "make_unique<T[N]>() is forbidden, please use make_unique<T[]>().");
-
-	typedef typename std::remove_extent<T>::type U;
-	return std::unique_ptr<T>(new U[sizeof...(Args)]{std::forward<Args>(args)...});
-}
-
-template <typename T, typename... Args>
-std::unique_ptr<T> make_unique(Args&&... args) {
-	return make_unique_helper<T>(std::is_array<T>(), std::forward<Args>(args)...);
-}
-
-
-} // namespace std
-
+// If you are building with c++17 or newer std filesystem will be enabled by default
+#if __cplusplus >= 201500
+    #define OF_HAS_CPP17 1
+    #if __cplusplus < 201703L
+        #define OF_USE_EXPERIMENTAL_FS 1
+    #endif
+#else
+    #define OF_HAS_CPP17 0
 #endif
 
-//------------------------------------------------ forward declaration for std::filesystem::path
-// Remove from here once everything is using std::filesystem::path
-#if OF_USING_STD_FS
-#	if __cplusplus < 201703L
-#       define OF_USE_EXPERIMENTAL_FS 1
 
-    namespace std {
-        namespace experimental{
-            namespace filesystem {
-                namespace v1 {
-                    namespace __cxx11 {
-                        class path;
+#ifndef OF_USING_STD_FS
+	#if OF_HAS_CPP17
+		#define OF_USING_STD_FS 1
+	#else
+		// Set to 1 to force std filesystem instead of boost's
+		#define OF_USING_STD_FS 0
+	#endif
+#endif
+
+// Some projects will specify OF_USING_STD_FS even if the compiler isn't newer than 201703L
+// This may be okay but we need to test for the way C++17 is including the filesystem
+
+#if  OF_USING_STD_FS && !defined(OF_USE_EXPERIMENTAL_FS)
+    #if defined(__cpp_lib_filesystem)
+        #define OF_USE_EXPERIMENTAL_FS 0
+    #elif defined(__cpp_lib_experimental_filesystem)
+        #define OF_USE_EXPERIMENTAL_FS 1
+    #elif !defined(__has_include)
+        #define OF_USE_EXPERIMENTAL_FS 1
+    #elif __has_include(<filesystem>)
+        // If we're compiling on Visual Studio and are not compiling with C++17, we need to use experimental
+        #ifdef _MSC_VER
+        
+            // Check and include header that defines "_HAS_CXX17"
+            #if __has_include(<yvals_core.h>)
+                #include <yvals_core.h>
+                
+                // Check for enabled C++17 support
+                #if defined(_HAS_CXX17) && _HAS_CXX17
+                // We're using C++17, so let's use the normal version
+                    #define OF_USE_EXPERIMENTAL_FS 0
+                #endif
+            #endif
+
+            // If the macro isn't defined yet, that means any of the other VS specific checks failed, so we need to use experimental
+            #ifndef INCLUDE_STD_FILESYSTEM_EXPERIMENTAL
+                #define OF_USE_EXPERIMENTAL_FS 1
+            #endif
+
+        // Not on Visual Studio. Let's use the normal version
+        #else // #ifdef _MSC_VER
+            #define OF_USE_EXPERIMENTAL_FS 0
+        #endif
+    #else
+        #define OF_USE_EXPERIMENTAL_FS 0
+    #endif
+#endif
+
+#if OF_USING_STD_FS
+    #if OF_USE_EXPERIMENTAL_FS
+        // C++17 experimental fs support
+        #include <experimental/filesystem>
+        
+        #if OF_HAS_CPP17
+            namespace std {
+                namespace experimental{
+                    namespace filesystem {
+                        using path = v1::path;
                     }
                 }
-
-                using v1::__cxx11::path;
             }
-        }
-        namespace filesystem = experimental::filesystem;
-    }
-#	else
-#       define OF_USE_EXPERIMENTAL_FS 0
+        #else
+            namespace std {
+                namespace experimental{
+                    namespace filesystem {
+                        using path = v1::__cxx11::path;
+                    }
+                }
+            }
+        #endif
+        
+		namespace of {
+			namespace filesystem = std::experimental::filesystem;
+		}
+    #else
+		#include <filesystem>
+		#if OF_HAS_CPP17
+			// Regular C++17 fs support
+			namespace of {
+				namespace filesystem = std::filesystem;
+			}
+		#else
+			namespace of {
+				namespace filesystem = std::filesystem;
+			}
+		#endif
+    #endif
+#else //not OF_USING_STD_FS
+    // No experimental or c++17 filesytem support use boost
+    #if !_MSC_VER
+        #define BOOST_NO_CXX11_SCOPED_ENUMS
+        #define BOOST_NO_SCOPED_ENUMS
+    #endif
 
-	namespace std {
-		namespace filesystem {
-			class path;
-		}
-	}
-#	endif
-#else
-#	if !_MSC_VER
-#		define BOOST_NO_CXX11_SCOPED_ENUMS
-#		define BOOST_NO_SCOPED_ENUMS
-#	endif
-	namespace boost {
-		namespace filesystem {
-			class path;
-		}
-	}
-	namespace std {
+    #include <boost/filesystem.hpp>
+	namespace of {
 		namespace filesystem = boost::filesystem;
 	}
+
 #endif
