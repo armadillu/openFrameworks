@@ -1,2 +1,2 @@
 #!/bin/zsh
-${ccache} clang "$@"
+/usr/local/bin/ccache clang "$@"
