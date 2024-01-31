@@ -402,12 +402,14 @@ private:
 	void initDepthShaders(ofGLProgrammableRenderer& renderer) const;
 	const ofShader & getShadowDepthShader( const ofShadow& ashadow, ofGLProgrammableRenderer & renderer ) const;
 
+public:
 	void initShaders(ofGLProgrammableRenderer & renderer) const;
 	const ofShader & getShader(int textureTarget, bool geometryHasColor, ofGLProgrammableRenderer & renderer) const;
 	void updateMaterial(const ofShader & shader, ofGLProgrammableRenderer & renderer) const;
 	void updateLights(const ofShader & shader, ofGLProgrammableRenderer & renderer) const;
 	void updateShadows(const ofShader & shader, ofGLProgrammableRenderer & renderer) const;
 	void updateEnvironmentMaps(const ofShader & shader, ofGLProgrammableRenderer & renderer) const;
+private:
 
 	ofMaterialSettings data;
 
