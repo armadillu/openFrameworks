@@ -2,10 +2,10 @@
 #include "ofAppRunner.h"
 #include "ofPixels.h"
 
-#include "FreeImage.h"
+#include <FreeImage.h>
 
 #include "ofURLFileLoader.h"
-#include "uriparser/Uri.h"
+#include <uriparser/Uri.h>
 
 #if defined(TARGET_ANDROID)
 #include "ofxAndroidUtils.h"
@@ -533,7 +533,7 @@ static bool saveImage(const ofPixels_<PixelType> & _pix, ofBuffer & buffer, ofIm
 	ofInitFreeImage();
 
 	if (_pix.isAllocated() == false){
-		ofLogError("ofImage","saveImage(): couldn't save to ofBuffer, pixels are not allocated");
+		ofLogError("ofImage") << "saveImage(): couldn't save to ofBuffer, pixels are not allocated";
 		return false;
 	}
 

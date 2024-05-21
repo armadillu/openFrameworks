@@ -5,8 +5,9 @@
 
 #define GLM_FORCE_CTOR_INIT
 #define GLM_ENABLE_EXPERIMENTAL
-#include "glm/mat4x4.hpp"
+#include <glm/mat4x4.hpp>
 #include <glm/gtc/quaternion.hpp>
+
 #include <array>
 
 class ofBaseRenderer;
