@@ -119,8 +119,8 @@ endif
 
 .PHONY: all Debug Release after clean CleanDebug CleanRelease help force
 
-# $(info MAKEFLAGS XXX = ${MAKEFLAGS})
-JOBS = -j2
+ $(info 🥎 MAKEFLAGS XXX = ${MAKEFLAGS})
+#JOBS = -j2
 
 Release:
 	@echo Compiling OF library for Release
@@ -214,37 +214,37 @@ $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags: force
 # Rules to compile the project sources
 #$(OBJS): $(SOURCES)
 $(OF_PROJECT_OBJ_OUTPUT_PATH)%.o: $(PROJECT_ROOT)/%.cpp $(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CXX) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(CXXFLAGS) $(PROJECT_INCLUDE_CFLAGS) -MMD -MP -MF $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.d -MT $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.o -o $@ -c $<
 
 $(OF_PROJECT_OBJ_OUTPUT_PATH)%.o: $(PROJECT_ROOT)/%.cxx $(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CXX) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(CXXFLAGS) $(PROJECT_INCLUDE_CFLAGS) -MMD -MP -MF $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.d -MT $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.o -o $@ -c $<
 
 $(OF_PROJECT_OBJ_OUTPUT_PATH)%.o: $(PROJECT_ROOT)/%.cc $(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CXX) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(CXXFLAGS) $(PROJECT_INCLUDE_CFLAGS) -MMD -MP -MF $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.d -MT $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.o -o $@ -c $<
 
 $(OF_PROJECT_OBJ_OUTPUT_PATH)%.o: $(PROJECT_ROOT)/%.m $(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CXX) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(CXXFLAGS) $(PROJECT_INCLUDE_CFLAGS) -MMD -MP -MF $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.d -MT $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.o -o $@ -c $<
 
 $(OF_PROJECT_OBJ_OUTPUT_PATH)%.o: $(PROJECT_ROOT)/%.mm $(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CXX) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(CXXFLAGS) $(PROJECT_INCLUDE_CFLAGS) -MMD -MP -MF $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.d -MT $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.o -o $@ -c $<
 
 $(OF_PROJECT_OBJ_OUTPUT_PATH)%.o: $(PROJECT_ROOT)/%.c $(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CC) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(PROJECT_INCLUDE_CFLAGS) -MMD -MP -MF $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.d -MT $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.o -o $@ -c $<
 
 $(OF_PROJECT_OBJ_OUTPUT_PATH)%.o: $(PROJECT_ROOT)/%.S $(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CC) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS)  $(PROJECT_INCLUDE_CFLAGS) -MMD -MP -MF $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.d -MT $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.o -o $@ -c $<
 
@@ -252,7 +252,7 @@ $(OF_PROJECT_OBJ_OUTPUT_PATH)%.o: $(PROJECT_ROOT)/%.S $(OF_PROJECT_OBJ_OUTPUT_PA
 
 #Rules to create and compile resource file to include icon
 $(OF_PROJECT_OBJ_OUTPUT_PATH)%.res: $(ICON)
-	@echo "Compiling Resource" $<
+	@echo "➡️ Compiling Resource" $<
 	@mkdir -p $(@D)
 #Need to build an intermediate .rc file with Windows-like file path (C:/myproject/theIcon.ico)
 	@echo MAINICON ICON \"$(shell cygpath -m $<)\" > $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.rc
@@ -263,37 +263,37 @@ $(OF_PROJECT_OBJ_OUTPUT_PATH)%.res: $(ICON)
 
 # Rules to compile the project external sources
 $(OF_PROJECT_OBJ_OUTPUT_PATH)%.o: $(PROJECT_EXTERNAL_SOURCE_PATHS)/%.cpp $(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CXX) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(CXXFLAGS) $(PROJECT_INCLUDE_CFLAGS) -MMD -MP -MF $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.d -MT $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.o -o $@ -c $<
 
 $(OF_PROJECT_OBJ_OUTPUT_PATH)%.o: $(PROJECT_EXTERNAL_SOURCE_PATHS)/%.cxx $(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	@$(CXX) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(CXXFLAGS) $(PROJECT_INCLUDE_CFLAGS) -MMD -MP -MF $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.d -MT $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.o -o $@ -c $<
 
 $(OF_PROJECT_OBJ_OUTPUT_PATH)%.o: $(PROJECT_EXTERNAL_SOURCE_PATHS)/%.cc $(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CXX) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(CXXFLAGS) $(PROJECT_INCLUDE_CFLAGS) -MMD -MP -MF $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.d -MT $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.o -o $@ -c $<
 
 $(OF_PROJECT_OBJ_OUTPUT_PATH)%.o: $(PROJECT_EXTERNAL_SOURCE_PATHS)/%.m $(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CXX) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(CXXFLAGS) $(PROJECT_INCLUDE_CFLAGS) -MMD -MP -MF $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.d -MT $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.o -o $@ -c $<
 
 $(OF_PROJECT_OBJ_OUTPUT_PATH)%.o: $(PROJECT_EXTERNAL_SOURCE_PATHS)/%.mm $(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CXX) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(CXXFLAGS) $(PROJECT_INCLUDE_CFLAGS) -MMD -MP -MF $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.d -MT $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.o -o $@ -c $<
 
 $(OF_PROJECT_OBJ_OUTPUT_PATH)%.o: $(PROJECT_EXTERNAL_SOURCE_PATHS)/%.c $(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CC) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(PROJECT_INCLUDE_CFLAGS) -MMD -MP -MF $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.d -MT $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.o -o $@ -c $<
 
 $(OF_PROJECT_OBJ_OUTPUT_PATH)%.o: $(PROJECT_EXTERNAL_SOURCE_PATHS)/%.S $(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CC) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(PROJECT_INCLUDE_CFLAGS) -MMD -MP -MF $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.d -MT $(OF_PROJECT_OBJ_OUTPUT_PATH)$*.o -o $@ -c $<
 
@@ -305,49 +305,49 @@ $(OF_PROJECT_OBJ_OUTPUT_PATH)%.o: $(PROJECT_EXTERNAL_SOURCE_PATHS)/%.S $(OF_PROJ
 PROJECT_ADDONS_OBJ_PATH=./$(OF_PROJECT_OBJ_OUTPUT_PATH)addons/
 $(PROJECT_ADDONS_OBJ_PATH)%.o: %.cpp $(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
 ifdef PROJECT_ADDON_PATHS
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CXX) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(CXXFLAGS) $(ADDON_INCLUDE_CFLAGS) -MMD -MP -MF $(PROJECT_ADDONS_OBJ_PATH)$*.d -MT $(PROJECT_ADDONS_OBJ_PATH)$*.o -o $@ -c $<
 endif
 
 $(PROJECT_ADDONS_OBJ_PATH)%.o: %.cxx $(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
 ifdef PROJECT_ADDON_PATHS
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	@$(CXX) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(CXXFLAGS) $(ADDON_INCLUDE_CFLAGS) -MMD -MP -MF $(PROJECT_ADDONS_OBJ_PATH)$*.d -MT $(PROJECT_ADDONS_OBJ_PATH)$*.o -o $@ -c $<
 endif
 
 $(PROJECT_ADDONS_OBJ_PATH)%.o: %.m $(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
 ifdef PROJECT_ADDON_PATHS
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CXX) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(CXXFLAGS) $(ADDON_INCLUDE_CFLAGS) -MMD -MP -MF $(PROJECT_ADDONS_OBJ_PATH)$*.d -MT $(PROJECT_ADDONS_OBJ_PATH)$*.o -o $@ -c $<
 endif
 
 $(PROJECT_ADDONS_OBJ_PATH)%.o: %.mm $(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
 ifdef PROJECT_ADDON_PATHS
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CXX) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(CXXFLAGS) $(ADDON_INCLUDE_CFLAGS) -MMD -MP -MF $(PROJECT_ADDONS_OBJ_PATH)$*.d -MT $(PROJECT_ADDONS_OBJ_PATH)$*.o -o $@ -c $<
 endif
 
 $(PROJECT_ADDONS_OBJ_PATH)%.o: %.cc $(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
 ifdef PROJECT_ADDON_PATHS
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CC) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(ADDON_INCLUDE_CFLAGS) -MMD -MP -MF $(PROJECT_ADDONS_OBJ_PATH)$*.d -MT $(PROJECT_ADDONS_OBJ_PATH)$*.o -o $@ -c $<
 endif
 
 $(PROJECT_ADDONS_OBJ_PATH)%.o: %.c $(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
 ifdef PROJECT_ADDON_PATHS
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CC) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(ADDON_INCLUDE_CFLAGS) -MMD -MP -MF $(PROJECT_ADDONS_OBJ_PATH)$*.d -MT $(PROJECT_ADDONS_OBJ_PATH)$*.o -o $@ -c $<
 endif
 
 $(PROJECT_ADDONS_OBJ_PATH)%.o: %.S $(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
 ifdef PROJECT_ADDON_PATHS
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CC) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(ADDON_INCLUDE_CFLAGS) -MMD -MP -MF $(PROJECT_ADDONS_OBJ_PATH)$*.d -MT $(PROJECT_ADDONS_OBJ_PATH)$*.o -o $@ -c $<
 endif
@@ -359,37 +359,37 @@ endif
 
 #Rules to compile the standard addons sources
 $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH)%.o: $(OF_ADDONS_PATH)/%.cpp $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CXX) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(CXXFLAGS) $(ADDON_INCLUDE_CFLAGS) -MMD -MP -MF $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH)$*.d -MT $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH)$*.o -o $@ -c $<
 
 $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH)%.o: $(OF_ADDONS_PATH)/%.cxx $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CXX) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(CXXFLAGS) $(ADDON_INCLUDE_CFLAGS) -MMD -MP -MF $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH)$*.d -MT $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH)$*.o -o $@ -c $<
 
 $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH)%.o: $(OF_ADDONS_PATH)/%.cc $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CXX) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(CXXFLAGS) $(ADDON_INCLUDE_CFLAGS) -MMD -MP -MF $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH)$*.d -MT $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH)$*.o -o $@ -c $<
 
 $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH)%.o: $(OF_ADDONS_PATH)/%.m $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CXX) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(CXXFLAGS) $(ADDON_INCLUDE_CFLAGS) -MMD -MP -MF $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH)$*.d -MT $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH)$*.o -o $@ -c $<
 
 $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH)%.o: $(OF_ADDONS_PATH)/%.mm $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CXX) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(CXXFLAGS) $(ADDON_INCLUDE_CFLAGS) -MMD -MP -MF $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH)$*.d -MT $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH)$*.o -o $@ -c $<
 
 $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH)%.o: $(OF_ADDONS_PATH)/%.c $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CC) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(ADDON_INCLUDE_CFLAGS) -MMD -MP -MF $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH)$*.d -MT $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH)$*.o -o $@ -c $<
 
 $(OF_ADDONS_PATH)/addons/$(OF_PROJECT_OBJ_OUTPUT_PATH)%.o: $(OF_ADDONS_PATH)/%.S $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CC) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(ADDON_INCLUDE_CFLAGS) -MMD -MP -MF $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH)$*.d -MT $(OF_ADDONS_PATH)/$(OF_PROJECT_OBJ_OUTPUT_PATH)$*.o -o $@ -c $<
 
@@ -397,14 +397,14 @@ $(OF_ADDONS_PATH)/addons/$(OF_PROJECT_OBJ_OUTPUT_PATH)%.o: $(OF_ADDONS_PATH)/%.S
 
 # Rules to compile the addons sources from the core
 $(OF_PROJECT_OBJ_OUTPUT_PATH)libs/openFrameworks/%.o: $(OF_ROOT)/libs/openFrameworks/%.cpp $(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Compiling" $<
+	@echo "➡️ Compiling" $<
 	@mkdir -p $(@D)
 	$(CXX) -c $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(CXXFLAGS) $(OF_CORE_INCLUDES_CFLAGS) $(ADDON_INCLUDE_CFLAGS) -MMD -MP -MF $(OF_PROJECT_OBJ_OUTPUT_PATH)libs/openFrameworks/$*.d -MT $(OF_PROJECT_OBJ_OUTPUT_PATH)libs/openFrameworks/$*.o -o $@ -c $<
 
 
 # Rules to link the project
 $(TARGET): $(OF_PROJECT_OBJS) $(OF_PROJECT_RESOURCES) $(OF_PROJECT_ADDONS_OBJS) $(OF_PROJECT_LIBS) $(TARGET_LIBS) $(OF_PROJECT_OBJ_OUTPUT_PATH).compiler_flags
-	@echo 'Linking $(TARGET) for $(ABI_LIB_SUBPATH)'
+	@echo '📚 Linking $(TARGET) for $(ABI_LIB_SUBPATH)'
 	@mkdir -p $(@D)
 	$(CXX) -o $@ $(OPTIMIZATION_LDFLAGS) $(OF_PROJECT_OBJS) $(OF_PROJECT_RESOURCES) $(OF_PROJECT_ADDONS_OBJS) $(TARGET_LIBS) $(OF_PROJECT_LIBS) $(LDFLAGS) $(OF_CORE_LIBS)
 

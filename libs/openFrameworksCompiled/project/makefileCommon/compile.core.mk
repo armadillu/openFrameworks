@@ -244,17 +244,17 @@ $(OF_CORE_OBJ_OUTPUT_PATH).compiler_flags: force
 
 #This rule does the compilation
 $(OF_CORE_OBJ_OUTPUT_PATH)%.o: $(OF_ROOT)/%.cpp $(OF_CORE_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Compiling" $<
+	@echo "▶️ Compiling cpp " $<
 	@mkdir -p $(@D)
 	$(CXX) $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(CXXFLAGS) -MMD -MP -MF $(OF_CORE_OBJ_OUTPUT_PATH)$*.d -MT$(OF_CORE_OBJ_OUTPUT_PATH)$*.o -o $@ -c $<
 
 $(OF_CORE_OBJ_OUTPUT_PATH)%.o: $(OF_ROOT)/%.mm $(OF_CORE_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Compiling" $<
+	@echo "▶️ Compiling mm " $<
 	@mkdir -p $(@D)
 	$(CXX) $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(CXXFLAGS) -MMD -MP -MF $(OF_CORE_OBJ_OUTPUT_PATH)$*.d -MT$(OF_CORE_OBJ_OUTPUT_PATH)$*.o -o $@ -c $<
 
 $(OF_CORE_OBJ_OUTPUT_PATH)%.o: $(OF_ROOT)/%.m $(OF_CORE_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Compiling" $<
+	@echo "▶️ Compiling m" $<
 	@mkdir -p $(@D)
 	$(CC) $(OPTIMIZATION_CFLAGS) $(CFLAGS) $(CXXFLAGS) -MMD -MP -MF $(OF_CORE_OBJ_OUTPUT_PATH)$*.d -MT$(OF_CORE_OBJ_OUTPUT_PATH)$*.o -o $@ -c $<
 
@@ -263,17 +263,17 @@ $(OF_CORE_OBJ_OUTPUT_PATH)%.o: $(OF_ROOT)/%.m $(OF_CORE_OBJ_OUTPUT_PATH).compile
 # $(OF_CORE_OBJ_FILES) must be processed first
 ifeq ($(SHAREDCORE),1)
 $(TARGET) : $(OF_CORE_OBJ_FILES) $(OF_CORE_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Creating library " $(TARGET)
+	@echo "📚 Creating library " $(TARGET)
 	@mkdir -p $(@D)
 	$(CC) -shared $(OF_CORE_OBJ_FILES) -o $@
 else ifeq ($(BYTECODECORE),1)
 $(TARGET) : $(OF_CORE_OBJ_FILES) $(OF_CORE_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Creating library " $(TARGET)
+	@echo "📚 Creating library " $(TARGET)
 	@mkdir -p $(@D)
 	$(CC) $(OF_CORE_OBJ_FILES) -o $@
 else
 $(TARGET) : $(OF_CORE_OBJ_FILES) $(OF_CORE_OBJ_OUTPUT_PATH).compiler_flags
-	@echo "Creating library " $(TARGET)
+	@echo "📚 Creating library " $(TARGET)
 	@mkdir -p $(@D)
 	$(AR) ${ARFLAGS} "$@" $(OF_CORE_OBJ_FILES)
 endif
