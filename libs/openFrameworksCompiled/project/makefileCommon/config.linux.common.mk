@@ -336,6 +336,7 @@ PLATFORM_LIBRARIES += stdc++fs
 endif
 PLATFORM_LIBRARIES += pugixml
 PLATFORM_LIBRARIES += uriparser
+PLATFORM_LIBRARIES += freeimage
 
 #static libraries (fully qualified paths)
 PLATFORM_STATIC_LIBRARIES =
@@ -373,17 +374,17 @@ ifeq "$(shell pkg-config --exists libcurl4 && echo 1)" "1"
 endif
 
 
-# ifeq ($(CROSS_COMPILING),1)
-# 	ifeq "$(shell export PKG_CONFIG_LIBDIR=$(PKG_CONFIG_LIBDIR); pkg-config --exists glfw3 && echo 1)" "1"
-# 		PLATFORM_PKG_CONFIG_LIBRARIES += glfw3
-# 		PLATFORM_LIBRARIES += Xinerama
-# 	endif
-# else
-# 	ifeq "$(shell pkg-config --exists glfw3 && echo 1)" "1"
-# 		PLATFORM_PKG_CONFIG_LIBRARIES += glfw3
-# 		PLATFORM_LIBRARIES += Xinerama
-# 	endif
-# endif
+ifeq ($(CROSS_COMPILING),1)
+	ifeq "$(shell export PKG_CONFIG_LIBDIR=$(PKG_CONFIG_LIBDIR); pkg-config --exists glfw3 && echo 1)" "1"
+		PLATFORM_PKG_CONFIG_LIBRARIES += glfw3
+		PLATFORM_LIBRARIES += Xinerama
+	endif
+else
+	ifeq "$(shell pkg-config --exists glfw3 && echo 1)" "1"
+		PLATFORM_PKG_CONFIG_LIBRARIES += glfw3
+		PLATFORM_LIBRARIES += Xinerama
+	endif
+endif
 
 ifeq ($(CROSS_COMPILING),1)
 	ifeq "$(shell export PKG_CONFIG_LIBDIR=$(PKG_CONFIG_LIBDIR); pkg-config --exists rtaudio && echo 1)" "1"
