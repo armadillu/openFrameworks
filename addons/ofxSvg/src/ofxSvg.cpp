@@ -1614,7 +1614,7 @@ void ofxSvg::_parsePath( ofXml& tnode, std::shared_ptr<ofxSvgPath> aSvgPath ) {
 //					aSvgPath->path.rotateRad(xrotRad, glm::vec3(0.0f, 0.0f, 1.f));
 					
 					for( auto& pv : tline.getVertices() ) {
-						auto nv = pv - cpt;
+						glm::vec3 nv = glm::vec3(pv) - cpt;
 						if( glm::length2(nv) > 0.0f ) {
 							nv = glm::vec3( glm::rotate(glm::vec2(nv.x, nv.y), xrotRad), 0.f);
 						}
