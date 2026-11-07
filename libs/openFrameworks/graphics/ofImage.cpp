@@ -1,6 +1,7 @@
 #include "ofImage.h"
 #include "ofAppRunner.h"
 #include "ofPixels.h"
+#include "ofFileUtils.h"
 
 #include <FreeImage.h>
 
@@ -200,17 +201,19 @@ static bool loadImage(ofPixels_<PixelType> & pix, const of::filesystem::path & _
 	ofInitFreeImage();
 
 	auto uriStr = ofPathToString(_fileName);
+	auto fileNameString = ofPathToString(_fileName);
 	UriUriA uri;
 	UriParserStateA state;
 	state.uri = &uri;
+	auto uriChar = uriStr.c_str();
 
-	if(uriParseUriA(&state, uriStr.c_str())!=URI_SUCCESS){
-		const int bytesNeeded = 8 + 3 * strlen(uriStr.c_str()) + 1;
+	if(uriParseUriA(&state, uriChar)!=URI_SUCCESS){
+		const int bytesNeeded = 8 + 3 * strlen(uriChar) + 1;
 		std::vector<char> absUri(bytesNeeded);
 	#ifdef TARGET_WIN32
-		uriWindowsFilenameToUriStringA(uriStr.c_str(), absUri.data());
+		uriWindowsFilenameToUriStringA(uriChar, absUri.data());
 	#else
-		uriUnixFilenameToUriStringA(uriStr.c_str(), absUri.data());
+		uriUnixFilenameToUriStringA(uriChar, absUri.data());
 	#endif
 		if(uriParseUriA(&state, absUri.data())!=URI_SUCCESS){
 			ofLogError("ofImage") << "loadImage(): malformed uri when loading image from uri " << _fileName;
@@ -225,22 +228,35 @@ static bool loadImage(ofPixels_<PixelType> & pix, const of::filesystem::path & _
 		return ofLoadImage(pix, ofLoadURL(ofPathToString(_fileName)).data);
 	}
 
-	auto fileName = ofToDataPathFS(_fileName, true);
+
+	ofFile file(_fileName);
+	if (!file.exists()) {
+		ofLogError("loadImage") << "File not found: " << _fileName;
+		return false;
+	}
+
+	std::uint64_t fileSize = file.getSize();
+	if (fileSize == 0) {
+		ofLogError("loadImage") << "File is empty: " << _fileName;
+		return false;
+	}
+	
 	bool bLoaded = false;
 	FIBITMAP * bmp = nullptr;
 
+	try {
 	FREE_IMAGE_FORMAT fif = FIF_UNKNOWN;
 #ifdef OF_OS_WINDOWS
-	fif = FreeImage_GetFileTypeU(fileName.c_str(), 0);
+	fif = FreeImage_GetFileTypeU(_fileName.c_str(), 0);
 #else
-	fif = FreeImage_GetFileType(fileName.c_str(), 0);
+	fif = FreeImage_GetFileType(_fileName.c_str(), 0);
 #endif
 	if(fif == FIF_UNKNOWN) {
 		// or guess via filename
 #ifdef OF_OS_WINDOWS
-		fif = FreeImage_GetFIFFromFilenameU(_fileName.extension().c_str());
+		fif = FreeImage_GetFIFFromFilenameU(_fileName.c_str());
 #else
-		fif = FreeImage_GetFIFFromFilename(_fileName.extension().c_str());
+		fif = FreeImage_GetFIFFromFilename(_fileName.c_str());
 #endif
 	}
 	if((fif != FIF_UNKNOWN) && FreeImage_FIFSupportsReading(fif)) {
@@ -248,6 +264,12 @@ static bool loadImage(ofPixels_<PixelType> & pix, const of::filesystem::path & _
 		if(fif == FIF_JPEG) {
 			option = getJpegOptionFromImageLoadSetting(settings);
 		}
+		if (!FreeImage_FIFSupportsReading(fif)) {
+			std::cerr << "Error: FreeImage does not support reading this format." << std::endl;
+		}
+		auto fileName = ofToDataPathFS(_fileName);
+
+
 #ifdef OF_OS_WINDOWS
 		bmp = FreeImage_LoadU(fif, fileName.c_str(), option | settings.freeImageFlags);
 #else
@@ -258,6 +280,16 @@ static bool loadImage(ofPixels_<PixelType> & pix, const of::filesystem::path & _
 			bLoaded = true;
 		}
 	}
+
+	}
+catch (const std::exception & e) {
+	std::cerr << "Exception caught in FreeImage_Load: " << e.what() << std::endl;
+	return false;
+}
+catch (...) {
+	std::cerr << "Unknown exception caught in FreeImage_Load." << std::endl;
+	return false;
+}
 
 	//-----------------------------
 
@@ -360,7 +392,8 @@ bool ofLoadImage(ofTexture & tex, const of::filesystem::path & path, const ofIma
 //----------------------------------------------------------------
 bool ofLoadImage(ofTexture & tex, const of::filesystem::path& path, bool bFlipInY, const ofImageLoadSettings &settings){
 	bool loaded = false;
-	std::string ext = ofToLower(path.extension().string());
+	auto ext = ofGetExtensionLower(path);
+
 	bool hdr = (ext == ".hdr" || ext == ".exr");
 	if( hdr ) {
 		ofFloatPixels pixels;
@@ -406,7 +439,7 @@ bool ofLoadImage(ofTexture & tex, const ofBuffer & buffer, const ofImageLoadSett
 
 //----------------------------------------------------------------
 template<typename PixelType>
-static bool saveImage(const ofPixels_<PixelType> & _pix, const of::filesystem::path& _fileName, ofImageQualityType qualityLevel) {
+static bool saveImage(const ofPixels_<PixelType> & _pix, const of::filesystem::path & _fileName, ofImageQualityType qualityLevel) {
 	ofInitFreeImage();
 	if (_pix.isAllocated() == false){
 		ofLogError("ofImage") << "saveImage(): couldn't save " << _fileName << ", pixels are not allocated";
@@ -793,7 +826,7 @@ bool ofImage_<PixelType>::load(const of::filesystem::path & fileName, const ofIm
 
 //----------------------------------------------------------
 template<typename PixelType>
-bool ofImage_<PixelType>::loadImage(const std::string& fileName){
+bool ofImage_<PixelType>::loadImage(const of::filesystem::path & fileName){
 	return load(fileName);
 }
 
@@ -834,7 +867,7 @@ bool ofImage_<PixelType>::save(ofBuffer & buffer, ofImageFormat imageFormat, ofI
 
 //----------------------------------------------------------
 template<typename PixelType>
-void ofImage_<PixelType>::saveImage(const std::string& fileName, ofImageQualityType qualityLevel) const {
+void ofImage_<PixelType>::saveImage(const of::filesystem::path & fileName, ofImageQualityType qualityLevel) const {
 	save(fileName, qualityLevel);
 }
 

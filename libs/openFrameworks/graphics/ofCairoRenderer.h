@@ -1,6 +1,7 @@
 #pragma once
-
-#include <cairo.h>
+#include "ofConstants.h"
+#if defined(OF_CAIRO)
+#include <cairo/cairo.h>
 #include "ofGraphicsBaseTypes.h"
 // MARK: Optimization opportunity in ofPath, ofPixels pointer.
 #include "ofPath.h"
@@ -45,6 +46,8 @@ public:
 	void draw(const ofFloatImage & image, float x, float y, float z, float w, float h, float sx, float sy, float sw, float sh) const;
 	void draw(const ofShortImage & image, float x, float y, float z, float w, float h, float sx, float sy, float sw, float sh) const;
 	void draw(const ofBaseVideoDraws & video, float x, float y, float w, float h) const;
+	// TODO: This could probably be implemented.
+	void drawBackgroundGradient(const ofFloatColor& start, const ofFloatColor& end, ofGradientMode mode) const {};
 	ofPath & getPath();
 
 	//--------------------------------------------
@@ -83,7 +86,11 @@ public:
 	void setFillMode(ofFillFlag fill);
 	ofFillFlag getFillMode();
 	void setLineWidth(float lineWidth);
+	void setPointSize(float pointSize);
+	void enablePointSprites() {};
+	void disablePointSprites() {};
 	void setDepthTest(bool depthTest);
+	void setDepthWrite(bool write) {};
 	void setBlendMode(ofBlendMode blendMode);
 	void setLineSmoothing(bool smooth);
 	void enableAntiAliasing();
@@ -208,3 +215,4 @@ private:
 	std::deque <ofStyle> styleHistory;
 	ofPath path;
 };
+#endif

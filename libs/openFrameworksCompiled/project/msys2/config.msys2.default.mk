@@ -25,17 +25,28 @@
 #   core source code.
 ##########################################################################################
 
-MINGW_PREFIX ?= /mingw32
-PLATFORM_CFLAGS += -std=gnu++17 -DUNICODE -D_UNICODE
+#MINGW_PREFIX ?= /mingw32
+MINGW_PREFIX ?= /mingw64
+PLATFORM_CXXFLAGS += -std=gnu++17
+PLATFORM_CFLAGS += -DUNICODE -D_UNICODE
 #PLATFORM_CFLAGS += -IC:/msys64/mingw32/include/gstreamer-1.0 -DOF_VIDEO_PLAYER_GSTREAMER
 
-CC = $(MINGW_PREFIX)/bin/gcc
-CXX = $(MINGW_PREFIX)/bin/g++
+# CLANG64 / CLANGARM64 ship clang + LLVM tools and no gcc/binutils
+ifneq ($(filter CLANG64 CLANGARM64,$(MSYSTEM)),)
+	CC = $(MINGW_PREFIX)/bin/clang
+	CXX = $(MINGW_PREFIX)/bin/clang++
+	PLATFORM_AR = $(firstword $(wildcard $(MINGW_PREFIX)/bin/llvm-ar.exe) $(MINGW_PREFIX)/bin/ar)
+	PLATFORM_RESOURCE_COMPILER = $(firstword $(wildcard $(MINGW_PREFIX)/bin/llvm-windres.exe) $(MINGW_PREFIX)/bin/windres)
+else
+	CC = $(MINGW_PREFIX)/bin/gcc
+	CXX = $(MINGW_PREFIX)/bin/g++
+	PLATFORM_AR = $(MINGW_PREFIX)/bin/ar
+	PLATFORM_RESOURCE_COMPILER = $(MINGW_PREFIX)/bin/windres
+endif
 
 FIND ?= /usr/bin/find
-PLATFORM_AR = $(MINGW_PREFIX)/bin/ar
-PLATFORM_LD = $(MINGW_PREFIX)/bin/ld
-PLATFORM_RESOURCE_COMPILER = $(MINGW_PREFIX)/bin/windres
+#PLATFORM_LD = $(MINGW_PREFIX)/bin/ld
+PLATFORM_LD = /usr/bin/lld
 PLATFORM_PKG_CONFIG = $(MINGW_PREFIX)/bin/pkgconf
 
 
@@ -125,6 +136,7 @@ PLATFORM_CFLAGS += -fexceptions
 #PLATFORM_LDFLAGS += -arch i386
 PLATFORM_LDFLAGS += -lpthread
 
+
 ifeq ($(findstring MINGW64,$(MSYSTEM)),MINGW64)
 	PLATFORM_LDFLAGS += -Wl,--disable-dynamicbase,--disable-high-entropy-va,--default-image-base-low
 endif
@@ -187,7 +199,6 @@ PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/FreeImage/%
 PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/glm/%
 PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/json/%
 PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/openssl/%
-PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/boost/%
 PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/glfw/%
 PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/curl/%
 PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/pugixml/%
@@ -231,7 +242,6 @@ PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/utf8/%
 PLATFORM_LIBRARIES += ksuser opengl32 gdi32 msimg32 glu32 dsound winmm strmiids #dxguid
 PLATFORM_LIBRARIES += uuid ole32 oleaut32 setupapi wsock32 ws2_32 Iphlpapi Comdlg32
 PLATFORM_LIBRARIES += freeimage
-# PLATFORM_LIBRARIES += boost_filesystem-mt boost_system-mt
 PLATFORM_LIBRARIES += mf mfplat mfuuid mfreadwrite
 # PLATFORM_LIBRARIES += glfw3
 

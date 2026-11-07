@@ -6,6 +6,7 @@
 #include "ofGraphics.h"
 #include "ofConstants.h"
 #include "ofMatrix4x4.h"
+#include "ofUtils.h" // ofGetElapsedTimef
 
 #include <assimp/cimport.h>
 #include <assimp/scene.h>
@@ -26,12 +27,12 @@ ofxAssimpModelLoader::~ofxAssimpModelLoader(){
 
 
 // DEPRECATED
-bool ofxAssimpModelLoader::load(string modelName, bool optimize){
+bool ofxAssimpModelLoader::load(const of::filesystem::path & fileName, bool optimize){
 	int optimizeFlags = OPTIMIZE_DEFAULT;
 	if( optimize ){
 		optimizeFlags = OPTIMIZE_HIGH;
 	}
-	return load(modelName, optimizeFlags);
+	return load(fileName, optimizeFlags);
 }
 
 // DEPRECATED
@@ -44,26 +45,32 @@ bool ofxAssimpModelLoader::load(ofBuffer & buffer, bool optimize, const char * e
 }
 
 // DEPRECATED
-bool ofxAssimpModelLoader::loadModel(string modelName, bool optimize){
-	return load(modelName, optimize);
+bool ofxAssimpModelLoader::loadModel(const of::filesystem::path & fileName, bool optimize){
+	int optimizeFlags = OPTIMIZE_DEFAULT;
+	if( optimize ){
+		optimizeFlags = OPTIMIZE_HIGH;
+	}
+	return load(fileName, optimizeFlags);
 }
 
 // DEPRECATED
 bool ofxAssimpModelLoader::loadModel(ofBuffer & buffer, bool optimize, const char * extension){
-	return load(buffer, optimize, extension);
+	int optimizeFlags = OPTIMIZE_DEFAULT;
+	if( optimize ){
+		optimizeFlags = OPTIMIZE_HIGH;
+	}
+	return load(buffer, optimizeFlags, extension);
 }
 
 //------------------------------------------
-bool ofxAssimpModelLoader::load(string modelName, int assimpOptimizeFlags){
-
-	file.open(modelName, ofFile::ReadOnly, true); // Since it may be a binary file we should read it in binary -Ed
-	if(!file.exists()) {
-		ofLogVerbose("ofxAssimpModelLoader") << "load(): model does not exist: \"" << modelName << "\"";
+bool ofxAssimpModelLoader::load(const of::filesystem::path & fileName, int assimpOptimizeFlags){
+	file = ofToDataPath(fileName);
+	if (!of::filesystem::exists(file)) {
+		ofLogVerbose("ofxAssimpModelLoader") << "load(): model does not exist: " << fileName ;
 		return false;
 	}
-
-	ofLogVerbose("ofxAssimpModelLoader") << "load(): loading \"" << file.getFileName()
-	<< "\" from \"" << file.getEnclosingDirectory() << "\"";
+		
+	ofLogVerbose("ofxAssimpModelLoader") << "load(): loading " << fileName;
 
 	if(scene.get() != nullptr){
 		clear();
@@ -82,8 +89,7 @@ bool ofxAssimpModelLoader::load(string modelName, int assimpOptimizeFlags){
 	//	}
 
 	// loads scene from file
-	std::string path = file.getAbsolutePath();
-	const aiScene * scenePtr = importer.ReadFile(path.c_str(), flags);
+	const aiScene * scenePtr = importer.ReadFile(ofPathToString(file), flags);
 
 	//this is funky but the scenePtr is managed by assimp and so we can't put it in our shared_ptr without disabling the deleter with: [](const aiScene*){}
 	scene = shared_ptr<const aiScene>(scenePtr,[](const aiScene*){});
@@ -243,11 +249,11 @@ static GLint getGLFormatFromAiFormat(const char * aiFormat){
 				return GL_RGB;
 			}
 		}else{
-			ofLogError("getGLFormatFromAiFormat") << " can't parse format " << formatStr;
+			ofLogError("getGLFormatFromAiFormat") << "can't parse format " << formatStr;
 		}
 	}
 
-	ofLogWarning("getGLFormatFromAiFormat") << " can't parse format " << formatStr << " returning GL_RGB";
+	ofLogWarning("getGLFormatFromAiFormat") << "can't parse format " << formatStr << " returning GL_RGB";
 	return GL_RGB;
 }
 
@@ -367,13 +373,19 @@ void ofxAssimpModelLoader::loadGLResources(){
 			if(AI_SUCCESS == mtl->GetTexture((aiTextureType)d, texIndex, &texPath, NULL, NULL, NULL, NULL, &texMapMode[0])){
 
 				//this is a solution to support older versions of assimp. see the weak defination above
+#ifdef TARGET_WIN32
+				// aiTextureTypeToString is always available on Windows (no weak-symbol fallback needed/supported by MSVC)
+				ofLogVerbose("ofxAssimpModelLoader") << "loadGLResource(): loading " <<  aiTextureTypeToString((aiTextureType)d) << " image from \"" << texPath.data << "\"";
+#else
 				if( aiTextureTypeToString ){
 					ofLogVerbose("ofxAssimpModelLoader") << "loadGLResource(): loading " <<  aiTextureTypeToString((aiTextureType)d) << " image from \"" << texPath.data << "\"";
 				}
+#endif
 
 				bool bWrap = (texMapMode[0]==aiTextureMapMode_Wrap);
 
 				std::string texPathStr = texPath.C_Str();
+				
 
 				//deal with Blender putting "//" in front of local file paths
 				if( texPathStr.size() > 2 && texPathStr.substr(0, 2) == "//" ){
@@ -390,7 +402,8 @@ void ofxAssimpModelLoader::loadGLResources(){
 				auto ogPath = texPathStr;
 				bool bHasEmbeddedTexture = false;
 
-				auto modelFolder = ofFilePath::getEnclosingDirectory( file.path() );
+				auto modelFolder { file.parent_path() };
+				// auto modelFolder = ofFilePath::getEnclosingDirectory( file.path() );
 				auto relTexPath = ofFilePath::getEnclosingDirectory(texPathStr,false);
 				auto realPath = modelFolder / of::filesystem::path{ texPathStr };
 				
@@ -402,8 +415,8 @@ void ofxAssimpModelLoader::loadGLResources(){
 						bHasEmbeddedTexture = true;
 						ofLogVerbose("ofxAssimpModelLoader") << "loadGLResource() texture " << realPath.filename() << " is embedded ";
 					}else{
-						ofLogError("ofxAssimpModelLoader") << "loadGLResource(): texture doesn't exist: \""
-						<< file.getFileName() + "\" in \"" << realPath.string() << "\"";
+						ofLogError("ofxAssimpModelLoader") << "loadGLResource(): texture doesn't exist: "
+						<< file << " in \"" << realPath.string() << "\"";
 					}
 				}
 #endif
@@ -420,8 +433,8 @@ void ofxAssimpModelLoader::loadGLResources(){
 					assimpTexture.setTextureType((aiTextureType)d);
 					meshHelper.addTexture(assimpTexture);
 
-					ofLogVerbose("ofxAssimpModelLoader") << "loadGLResource(): texture already loaded: \""
-					<< file.getFileName() + "\" from \"" << realPath.string() << "\"" << " adding texture as " << assimpTexture.getTextureTypeAsString() ;
+					ofLogVerbose("ofxAssimpModelLoader") << "loadGLResource(): texture already loaded: "
+					<< file << " from \"" << realPath.string() << "\"" << " adding texture as " << assimpTexture.getTextureTypeAsString() ;
 				} else {
 
 					shared_ptr<ofTexture> texture = std::make_shared<ofTexture>();
@@ -464,8 +477,8 @@ void ofxAssimpModelLoader::loadGLResources(){
 
 						ofLogVerbose("ofxAssimpModelLoader") << "loadGLResource(): texture " << tmpTex.getTextureTypeAsString() << " loaded, dimensions: " << texture->getWidth() << "x" << texture->getHeight();
 					}else{
-						ofLogError("ofxAssimpModelLoader") << "loadGLResource(): couldn't load texture: \""
-						<< file.getFileName() + "\" from \"" << realPath.string() << "\"";
+						ofLogError("ofxAssimpModelLoader") << "loadGLResource(): couldn't load texture: "
+						<< file << " from \"" << realPath.string() << "\"";
 					}
 				}
 			}
@@ -525,7 +538,7 @@ void ofxAssimpModelLoader::loadGLResources(){
 			}
 		}
 
-		meshHelper.vbo.setIndexData(&meshHelper.indices[0],meshHelper.indices.size(),GL_STATIC_DRAW);
+		meshHelper.vbo.setIndexData(&meshHelper.indices[0],static_cast<int>(meshHelper.indices.size()),GL_STATIC_DRAW);
 
 		//modelMeshes.push_back(meshHelper);
 	}
@@ -705,7 +718,7 @@ bool ofxAssimpModelLoader::hasAnimations() {
 }
 
 unsigned int ofxAssimpModelLoader::getAnimationCount(){
-	return animations.size();
+	return static_cast<unsigned int>(animations.size());
 }
 
 ofxAssimpAnimation & ofxAssimpModelLoader::getAnimation(int animationIndex) {
@@ -802,7 +815,7 @@ bool ofxAssimpModelLoader::hasMeshes() {
 }
 
 unsigned int ofxAssimpModelLoader::getMeshCount() {
-	return modelMeshes.size();
+	return static_cast<unsigned int>(modelMeshes.size());
 }
 
 ofxAssimpMeshHelper & ofxAssimpModelLoader::getMeshHelper(int meshIndex) {
@@ -882,7 +895,7 @@ void ofxAssimpModelLoader::setScaleNormalization(bool normalize) {
 //-------------------------------------------
 void ofxAssimpModelLoader::setRotation(int which, float angle, float rot_x, float rot_y, float rot_z){
 	if(which + 1 > (int)rotAngle.size()){
-		int diff = 1 + (which - rotAngle.size());
+		int diff = 1 + (which - static_cast<int>(rotAngle.size()));
 		for(int i = 0; i < diff; i++){
 			rotAngle.push_back(0);
 			rotAxis.push_back(glm::vec3(0.0,0.0,0.0));
@@ -968,11 +981,11 @@ void ofxAssimpModelLoader::draw(ofPolyRenderMode renderType) {
 		ofEnableBlendMode(mesh.blendMode);
 
 #ifndef TARGET_OPENGLES
-		mesh.vbo.drawElements(GL_TRIANGLES,mesh.indices.size());
+		mesh.vbo.drawElements(GL_TRIANGLES,static_cast<int>(mesh.indices.size()));
 #else
 		switch(renderType){
 			case OF_MESH_FILL:
-				mesh.vbo.drawElements(GL_TRIANGLES,mesh.indices.size());
+				mesh.vbo.drawElements(GL_TRIANGLES,static_cast<int>(mesh.indices.size()));
 				break;
 			case OF_MESH_WIREFRAME:
 				//note this won't look the same as on non ES renderers.
@@ -1220,7 +1233,7 @@ glm::vec3 ofxAssimpModelLoader::getSceneCenterModelSpace(){
 
 //-------------------------------------------
 int ofxAssimpModelLoader::getNumRotations(){
-	return rotAngle.size();
+	return static_cast<int>(rotAngle.size());
 }
 
 //-------------------------------------------

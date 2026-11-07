@@ -1,9 +1,3 @@
-//
-//  ofCubeMap.cpp
-//
-//  Created by Nick Hardeman on 10/16/22.
-//
-
 #include "ofShader.h"
 #include "ofCubeMap.h"
 #include "ofImage.h"
@@ -14,13 +8,20 @@
 #include "ofCubeMapShaders.h"
 #include "ofFbo.h"
 #include "ofTexture.h"
+#include "ofFileUtils.h"
+#include "ofMaterial.h"
+#include "ofVboMesh.h"
 
 #ifdef TARGET_ANDROID
 #include "ofAppAndroidWindow.h"
 #endif
 
-#define GLM_FORCE_CTOR_INIT
-#define GLM_ENABLE_EXPERIMENTAL
+#if !defined(GLM_FORCE_CTOR_INIT)
+	#define GLM_FORCE_CTOR_INIT
+#endif
+#if !defined(GLM_ENABLE_EXPERIMENTAL)
+	#define GLM_ENABLE_EXPERIMENTAL
+#endif
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <map>
@@ -85,9 +86,9 @@ static void release(GLuint id){
 #ifdef TARGET_ANDROID
 // TODO: Hook this up to an event
 void ofCubeMap::regenerateAllTextures() {
-	for(size_t i=0; i<ofCubeMapsData().size(); i++) {
-		if(!ofCubeMapsData()[i].expired()) {
-			std::shared_ptr<ofCubeMap::Data> cubeMap = ofCubeMapsData()[i].lock();
+	for(size_t i=0;i<getCubeMapsData().size(); i++) {
+		if(!getCubeMapsData()[i].expired()) {
+			auto cubeMap = getCubeMapsData()[i].lock();
 			ofCubeMap::clearTextureData(cubeMap);
 		}
 	}
@@ -95,18 +96,16 @@ void ofCubeMap::regenerateAllTextures() {
 }
 #endif
 
-
-
-//----------------------------------------
-vector<weak_ptr<ofCubeMap::Data> > & ofCubeMapsData(){
-	static vector<weak_ptr<ofCubeMap::Data> > * cubeMapsActive = new vector<weak_ptr<ofCubeMap::Data> >;
-	return *cubeMapsActive;
+//--------------------------------------------------------------
+std::vector<std::weak_ptr<ofCubeMap::Data>>& ofCubeMap::getCubeMapsData() {
+	static std::vector<std::weak_ptr<ofCubeMap::Data>> cubeMapsDataActive;
+	return cubeMapsDataActive;
 }
 
 //--------------------------------------------------------------
 bool ofCubeMap::hasActiveCubeMap() {
-	for(size_t i=0;i< ofCubeMapsData().size();i++){
-		std::shared_ptr<ofCubeMap::Data> cubeMap = ofCubeMapsData()[i].lock();
+	for(size_t i=0;i<getCubeMapsData().size();i++){
+		auto cubeMap = getCubeMapsData()[i].lock();
 		if(cubeMap && cubeMap->isEnabled && cubeMap->index > -1 ){
 			return true;
 			break;
@@ -117,8 +116,8 @@ bool ofCubeMap::hasActiveCubeMap() {
 
 //--------------------------------------------------------------
 std::shared_ptr<ofCubeMap::Data> ofCubeMap::getActiveData() {
-	for(size_t i=0;i< ofCubeMapsData().size();i++){
-		std::shared_ptr<ofCubeMap::Data> cubeMap = ofCubeMapsData()[i].lock();
+	for(size_t i=0; i < getCubeMapsData().size();i++){
+		auto cubeMap = getCubeMapsData()[i].lock();
 		if(cubeMap && cubeMap->isEnabled && cubeMap->index > -1 ){
 			return cubeMap;
 		}
@@ -150,17 +149,17 @@ void ofCubeMap::_checkSetup() {
 	if( data->index < 0 ) {
 		bool bFound = false;
 		// search for the first free block
-		for(size_t i=0; i<ofCubeMapsData().size(); i++) {
-			if(ofCubeMapsData()[i].expired()) {
+		for(size_t i=0; i< getCubeMapsData().size(); i++) {
+			if(getCubeMapsData()[i].expired()) {
 				data->index = i;
-				ofCubeMapsData()[i] = data;
+				getCubeMapsData()[i] = data;
 				bFound = true;
 				break;
 			}
 		}
 		if(!bFound && ofIsGLProgrammableRenderer()){
-			ofCubeMapsData().push_back(data);
-			data->index = ofCubeMapsData().size() - 1;
+			getCubeMapsData().push_back(data);
+			data->index = getCubeMapsData().size() - 1;
 			bFound = true;
 		}
 	}
@@ -311,7 +310,7 @@ bool ofCubeMap::load( ofCubeMapSettings aSettings ) {
 	
 	clear();
 	
-	std::string ext = ofToLower(aSettings.filePath.extension().string());
+	auto ext = ofGetExtensionLower(aSettings.filePath);
 	bool hdr = (ext == ".hdr" || ext == ".exr");
 	
 	if( hdr && !doesSupportHdr() ) {
@@ -801,6 +800,8 @@ void ofCubeMap::_equiRectToCubeMap( GLuint& aCubeTexId, GLuint aSrcTexId, int aS
 	
 	GLuint captureFBO;
 	glGenFramebuffers(1, &captureFBO);
+	GLint prevFramebuffer = 0;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &prevFramebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)captureFBO );
 	
 	ofSetColor( 255 );
@@ -830,7 +831,7 @@ void ofCubeMap::_equiRectToCubeMap( GLuint& aCubeTexId, GLuint aSrcTexId, int aS
 		ofLogVerbose("ofCubeMap :: _equiRectToCubeMap : fbo COMPLETE; resolution: ") << aSrcRes;
 	}
 	
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)prevFramebuffer);
 	glDeleteFramebuffers(1, &captureFBO);
 }
 
@@ -850,7 +851,7 @@ void ofCubeMap::_createIrradianceMap(GLuint aSrcCubeFid, bool aBMakeCache, const
 	std::vector<glm::mat4> views = _getViewMatrices( glm::vec3(0,0,0) );
 	
 	if( !shaderIrradianceMap.isLoaded() ) {
-		auto isource = ofCubeMapShaders::irriadianceCubeMap();
+		auto isource = ofCubeMapShaders::irradianceCubeMap();
 		shaderIrradianceMap.setupShaderFromSource(GL_VERTEX_SHADER, isource.vertShader );
 		shaderIrradianceMap.setupShaderFromSource(GL_FRAGMENT_SHADER, isource.fragShader );
 		shaderIrradianceMap.bindDefaults();
@@ -948,6 +949,8 @@ void ofCubeMap::_createIrradianceMap(GLuint aSrcCubeFid, bool aBMakeCache, const
 		
 		GLuint captureFBO;
 		glGenFramebuffers(1, &captureFBO);
+		GLint prevFramebuffer = 0;
+		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &prevFramebuffer);
 		glBindFramebuffer(GL_FRAMEBUFFER, captureFBO );
 
 		ofPushView();
@@ -974,7 +977,7 @@ void ofCubeMap::_createIrradianceMap(GLuint aSrcCubeFid, bool aBMakeCache, const
 			ofLogVerbose("ofCubeMap :: _createIrradianceMap : fbo COMPLETE");
 		}
 
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)prevFramebuffer);
 		glDeleteFramebuffers(1, &captureFBO);
 		ofPopView();
 	}
@@ -1162,6 +1165,8 @@ void ofCubeMap::_createPrefilteredCubeMap(GLuint aSrcCubeFid, int aSrcRes, bool 
 		
 		unsigned int captureFBO;
 		glGenFramebuffers(1, &captureFBO);
+		GLint prevFramebuffer = 0;
+		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &prevFramebuffer);
 		glBindFramebuffer(GL_FRAMEBUFFER, captureFBO );
 		
 		for (int mip = 0; mip < data->maxMipLevels; mip++) {
@@ -1186,7 +1191,7 @@ void ofCubeMap::_createPrefilteredCubeMap(GLuint aSrcCubeFid, int aSrcRes, bool 
 			ofPopView();
 		}
 		
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)prevFramebuffer);
 		glDeleteFramebuffers(1, &captureFBO);
 	}
 	

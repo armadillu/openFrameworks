@@ -1,7 +1,11 @@
 #pragma once
 
-#define GLM_FORCE_CTOR_INIT
-#define GLM_ENABLE_EXPERIMENTAL
+#if !defined(GLM_FORCE_CTOR_INIT)
+	#define GLM_FORCE_CTOR_INIT
+#endif
+#if !defined(GLM_ENABLE_EXPERIMENTAL)
+	#define GLM_ENABLE_EXPERIMENTAL
+#endif
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <iostream>
@@ -493,8 +497,8 @@ public:
 
 	/// \brief Determines if the coordinates (x, y) are within the ofRectangle.
 	///
-	/// Note that coordinates on the edge of the ofRectangle are not
-	/// considered within the rectangle and will return false.
+	/// Coordinates on the edge of the ofRectangle are considered within the
+	/// rectangle and will return true.
 	///
 	/// \param px The x-coordinate to test.
 	/// \param py The y-coordinate to test.
@@ -503,8 +507,8 @@ public:
 
 	/// \brief Determines if the glm::vec3 is within the ofRectangle.
 	///
-	/// Note that points on the edge of the ofRectangle are not
-	/// considered within the rectangle and will return false.
+	/// Points on the edge of the ofRectangle are considered within the
+	/// rectangle and will return true.
 	///
 	/// \warning The z-component of the passed glm::vec3 is ignored.
 	///
@@ -515,8 +519,8 @@ public:
 
 	/// \brief Determines if another ofRectangle is completely within the ofRectangle.
 	///
-	/// Note that rectangles that share an edge with the ofRectangle are not
-	/// considered within the rectangle and will return false.
+	/// Rectangles that share an edge with the ofRectangle are considered
+	/// within the rectangle and will return true.
 	///
 	/// \param rect The ofRectangle to test.
 	/// \returns true if all four corners of the rect are within this rectangle.
@@ -524,8 +528,8 @@ public:
 
 	/// \brief Determines if both of the passed glm::vec3s are within the ofRectangle or not.
 	///
-	/// Note that points on the edge of the ofRectangle are not considered
-	/// within the rectangle and will return false.
+	/// Points on the edge of the ofRectangle are considered within the
+	/// rectangle and will return true.
 	///
 	/// \warning The z-components of the passed glm::vec3s are ignored.
 	///

@@ -1,4 +1,5 @@
 #include "ofTexture.h"
+#include "ofGLFramebuffer.h"
 #include "ofGraphics.h"
 #include "ofPixels.h"
 #include "ofGLUtils.h"
@@ -719,8 +720,22 @@ void ofTexture::loadData(const void * data, int w, int h, int glFormat, int glTy
 
 	if(!isCompressed){
     #endif
-		//update the texture image:
-		glTexSubImage2D(texData.textureTarget, 0, 0, 0, w, h, glFormat, glType, data);
+	//update the texture image:
+#ifdef TARGET_OF_IOS
+	glTexImage2D(texData.textureTarget, 0, texData.glInternalFormat, texData.tex_w, texData.tex_h, 0, glFormat, glType, 0);
+#endif
+#ifdef TARGET_OPENGLES
+	// ES 1.1 (fixed function): some drivers - e.g. the Android emulator's ES 1 to
+	// desktop GL translator - reject glTexSubImage2D with GL_LUMINANCE /
+	// GL_LUMINANCE_ALPHA / GL_ALPHA (GL_INVALID_ENUM, texture stays empty, so
+	// ofDrawBitmapString draws nothing). A full-size update can re-specify the
+	// level with glTexImage2D instead, which they accept.
+	if (!ofIsGLProgrammableRenderer() && w == texData.tex_w && h == texData.tex_h
+		&& (glFormat == GL_LUMINANCE || glFormat == GL_LUMINANCE_ALPHA || glFormat == GL_ALPHA)) {
+		glTexImage2D(texData.textureTarget, 0, texData.glInternalFormat, w, h, 0, glFormat, glType, data);
+	} else
+#endif
+	glTexSubImage2D(texData.textureTarget, 0, 0, 0, w, h, glFormat, glType, data);
     #ifndef TARGET_OPENGLES
 	}else{
 		std::size_t dataLen = std::size_t((texData.glInternalFormat == GL_COMPRESSED_RGB_S3TC_DXT1_EXT) ? w * h / 2 : w * h);
@@ -751,7 +766,7 @@ void ofTexture::generateMipmap(){
 	// Generate mipmaps using hardware-accelerated core GL methods.
 	
 	// 1. Check whether the current OpenGL version supports mipmap generation:
-	//    glGenerateMipmap() was introduced to OpenGL core in 3.0, and
+	//    ofGLGenerateMipmap() was introduced to OpenGL core in 3.0, and
 	//    OpenGLES core in 2.0 but earlier versions may support it if they
 	//	  support extension GL_EXT_framebuffer_object
 
@@ -763,7 +778,7 @@ void ofTexture::generateMipmap(){
 	
 	if (!isGlGenerateMipmapAvailable && !ofGLCheckExtension("GL_EXT_framebuffer_object")) {
 		static bool versionWarningIssued = false;
-		if (!versionWarningIssued) ofLogWarning() << "Your current OpenGL version does not support mipmap generation via glGenerateMipmap().";
+		if (!versionWarningIssued) ofLogWarning() << "Your current OpenGL version does not support mipmap generation via ofGLGenerateMipmap().";
 		versionWarningIssued = true;
 		texData.hasMipmap = false;
 		return;
@@ -772,14 +787,17 @@ void ofTexture::generateMipmap(){
 	// 2. Check whether the texture's texture target supports mipmap generation.
 	
 	switch (texData.textureTarget) {
-			/// OpenGL ES only supports mipmap for the following two texture targets:
+			/// OpenGL ES 2 supports mipmaps for the following two texture targets.
+			/// OpenGL ES 3 additionally supports 3D and 2D array textures (see below):
 		case GL_TEXTURE_2D:
 		case GL_TEXTURE_CUBE_MAP:
 #ifndef TARGET_OPENGLES
 			/// OpenGL supports mipmaps for additional texture targets:
 		case GL_TEXTURE_1D:
-		case GL_TEXTURE_3D:
 		case GL_TEXTURE_1D_ARRAY:
+#endif
+#if !defined(TARGET_OPENGLES) || (defined(GL_ES_VERSION_3_0) && defined(TARGET_OPENGLES_3))
+		case GL_TEXTURE_3D:
 		case GL_TEXTURE_2D_ARRAY:
 #endif
 		{
@@ -789,7 +807,7 @@ void ofTexture::generateMipmap(){
 			// See also: https://www.opengl.org/wiki/Common_Mistakes#Automatic_mipmap_generation
 
 			glBindTexture(texData.textureTarget, (GLuint) texData.textureID);
-			glGenerateMipmap(texData.textureTarget);
+			ofGLGenerateMipmap(texData.textureTarget);
 			glBindTexture(texData.textureTarget, 0);
 			texData.hasMipmap = true;
 			break;
@@ -891,7 +909,7 @@ void ofTexture::unbind(int textureLocation) const{
 	ofGetGLRenderer()->unbind(*this,textureLocation);
 }
 
-#if !defined(TARGET_OPENGLES) && defined(glBindImageTexture)
+#if !defined(TARGET_OPENGLES) || defined(GL_ES_VERSION_3_1)
 //----------------------------------------------------------
 void ofTexture::bindAsImage(GLuint unit, GLenum access, GLint level, GLboolean layered, GLint layer){
 	glBindImageTexture(unit,texData.textureID,level,layered,layer,access,texData.glInternalFormat);

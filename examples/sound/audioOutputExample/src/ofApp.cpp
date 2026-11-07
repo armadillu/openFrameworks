@@ -5,7 +5,7 @@ void ofApp::setup(){
 
 	ofBackground(34, 34, 34);
 	
-	int bufferSize		= 512;
+	int bufferSize		= 128;
 	sampleRate 			= 44100;
 	phase 				= 0;
 	phaseAdder 			= 0.0f;
@@ -142,10 +142,10 @@ void ofApp::draw(){
 void ofApp::keyPressed  (int key){
 	if (key == '-' || key == '_' ){
 		volume -= 0.05;
-		volume = std::max(volume, 0.f);
+		volume = MAX(volume, 0);
 	} else if (key == '+' || key == '=' ){
 		volume += 0.05;
-		volume = std::min(volume, 1.f);
+		volume = MIN(volume, 1);
 	}
 	
 	if( key == 's' ){
@@ -170,7 +170,7 @@ void ofApp::mouseMoved(int x, int y ){
 	float height = (float)ofGetHeight();
 	float heightPct = ((height-y) / height);
 	targetFrequency = 2000.0f * heightPct;
-	phaseAdderTarget = (targetFrequency / (float) sampleRate) * glm::two_pi<float>();
+	phaseAdderTarget = (targetFrequency / (float) sampleRate) * TWO_PI;
 }
 
 //--------------------------------------------------------------
@@ -212,9 +212,9 @@ void ofApp::audioOut(ofSoundBuffer & buffer){
 	float rightScale = pan;
 
 	// sin (n) seems to have trouble when n is very large, so we
-	// keep phase in the range of 0-glm::two_pi<float>() like this:
-	while (phase > glm::two_pi<float>()){
-		phase -= glm::two_pi<float>();
+	// keep phase in the range of 0-TWO_PI like this:
+	while (phase > TWO_PI){
+		phase -= TWO_PI;
 	}
 
 	if ( bNoise == true){

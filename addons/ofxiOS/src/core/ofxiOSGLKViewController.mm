@@ -6,6 +6,8 @@
 //
 
 #include <TargetConditionals.h>
+#include "ofxiOSConstants.h"
+#if defined(OF_UI_KIT) && defined(OF_GL_KIT)
 #if TARGET_OS_IOS || (TARGET_OS_IPHONE && !TARGET_OS_TV)
 
 #import "ofxiOSGLKViewController.h"
@@ -13,6 +15,7 @@
 #include "ofxiOSGLKView.h"
 #import "ofxiOSExtras.h"
 #include "ofAppiOSWindow.h"
+#include <glm/gtc/constants.hpp>
 
 @interface ofxiOSGLKViewController() <EAGLKViewDelegate, GLKViewControllerDelegate> {
     UIInterfaceOrientation currentInterfaceOrientation;
@@ -61,6 +64,13 @@
     
     GLKView *view = (GLKView *)self.view;
     view.context = [self.glView context];
+    // GLKViewController draws into its own GLKView, so it needs the drawable
+    // settings OF configured on glView (depth, stencil, colour, MSAA, scale)
+    view.drawableColorFormat = self.glView.drawableColorFormat;
+    view.drawableDepthFormat = self.glView.drawableDepthFormat;
+    view.drawableStencilFormat = self.glView.drawableStencilFormat;
+    view.drawableMultisample = self.glView.drawableMultisample;
+    view.contentScaleFactor = self.glView.contentScaleFactor;
     self.delegate = self;
     self.preferredFramesPerSecond = 60; //default
     [view setMultipleTouchEnabled:ofxiOSGetOFWindow()->isMultiTouch()];
@@ -469,4 +479,5 @@
 
 @end
 
+#endif
 #endif

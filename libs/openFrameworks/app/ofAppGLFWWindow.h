@@ -6,9 +6,12 @@
 // MARK: Target
 #include "ofConstants.h"
 
+#if defined(TARGET_GLFW_WINDOW)
 #if defined(TARGET_LINUX) && !defined(TARGET_RASPBERRY_PI_LEGACY)
 typedef struct _XIM * XIM;
 typedef struct _XIC * XIC;
+typedef struct wl_display wl_display;
+typedef struct wl_surface wl_surface;
 #endif
 
 class ofBaseApp;
@@ -51,8 +54,10 @@ public:
 	bool visible = true;
 	bool iconified = false;
 	bool decorated = true;
+    bool floating = false;
 	bool resizable = true;
 	bool transparent = false;
+    bool mousePassThrough = false;
 	bool maximized = false;
 	int monitor = 0;
 	bool multiMonitorFullScreen = false;
@@ -120,6 +125,7 @@ public:
 
 	void setFullscreen(bool fullscreen);
 	void toggleFullscreen();
+    void setWindowMousePassThrough(bool allowPassThrough);
 
 	void enableSetupScreen();
 	void disableSetupScreen();
@@ -165,8 +171,14 @@ public:
 	Window getX11Window();
 	XIC getX11XIC();
 
-	void setWindowIcon(const std::string & path);
+	void setWindowIcon(const of::filesystem::path & path);
 	void setWindowIcon(const ofPixels & iconPixels);
+
+	wl_display * getWaylandDisplay();
+	wl_surface * getWaylandSurface();
+
+	// Helper to detect the current backend
+	bool isUsingWayland() const;
 #endif
 
 #if defined(TARGET_LINUX) && !defined(TARGET_OPENGLES)
@@ -197,19 +209,21 @@ private:
 	static void 	keyboard_cb(GLFWwindow* windowP_, int key, int scancode, int action, int mods);
 	static void 	char_cb(GLFWwindow* windowP_, uint32_t key);
 	static void 	resize_cb(GLFWwindow* windowP_, int w, int h);
-  static void   position_cb(GLFWwindow* windowP_, int x, int y);
+    static void   position_cb(GLFWwindow* windowP_, int x, int y);
 	static void 	framebuffer_size_cb(GLFWwindow* windowP_, int w, int h);
 	static void 	exit_cb(GLFWwindow* windowP_);
 	static void		scroll_cb(GLFWwindow* windowP_, double x, double y);
 	static void 	drop_cb(GLFWwindow* windowP_, int numFiles, const char** dropString);
 	static void		error_cb(int errorCode, const char* errorDescription);
  	static void   refresh_cb(GLFWwindow * windowP_);
+	static void   focus_cb(GLFWwindow * windowP_, int focused);
 
 	void close();
 
 #if defined(TARGET_LINUX) && !defined(TARGET_RASPBERRY_PI_LEGACY)
 	XIM xim;
 	XIC xic;
+	bool usingWayland;
 #endif
 
 	std::unique_ptr<ofCoreEvents> coreEvents;
@@ -230,6 +244,7 @@ private:
 
 	int nFramesSinceWindowResized;
 	bool bWindowNeedsShowing;
+	bool bWindowFocused = true;
 
 #ifdef TARGET_RASPBERRY_PI
 	bool needsResizeCheck = false; /// Just for RPI at this point
@@ -250,4 +265,4 @@ private:
 #endif // TARGET_WIN32
 };
 
-//#endif
+#endif

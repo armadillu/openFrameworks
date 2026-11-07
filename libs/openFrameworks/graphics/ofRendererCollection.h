@@ -39,6 +39,8 @@ public:
 	void draw(const ofShortImage & img, float x, float y, float z, float w, float h, float sx, float sy, float sw, float sh) const;
 
 	void draw(const ofBaseVideoDraws & video, float x, float y, float w, float h) const;
+	
+	void drawBackgroundGradient(const ofFloatColor& start, const ofFloatColor& end, ofGradientMode mode) const;
 
 	/*void bind(const ofBaseVideoDraws & video) const{
 		for(int i=0;i<(int)renderers.size();i++){
@@ -180,8 +182,9 @@ public:
 	ofFillFlag getFillMode();
 
 	void setLineWidth(float lineWidth);
-
+	void setPointSize(float pointSize);
 	void setDepthTest(bool depthTest);
+	void setDepthWrite(bool write);
 
 	void setBlendMode(ofBlendMode blendMode);
 	void setLineSmoothing(bool smooth);

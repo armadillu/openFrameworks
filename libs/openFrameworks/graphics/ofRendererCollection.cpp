@@ -91,6 +91,12 @@ void ofRendererCollection::draw(const ofBaseVideoDraws & video, float x, float y
    }
 }
 
+void ofRendererCollection::drawBackgroundGradient(const ofFloatColor& start, const ofFloatColor& end, ofGradientMode mode) const {
+	for(auto renderer: renderers){
+		renderer->drawBackgroundGradient(start, end, mode);
+	}
+}
+
 /*void bind(const ofBaseVideoDraws & video) const{
    for(int i=0;i<(int)renderers.size();i++){
 	   renderers[i]->bind(video);
@@ -544,10 +550,22 @@ void ofRendererCollection::setLineWidth(float lineWidth){
    }
 }
 
+void ofRendererCollection::setPointSize(float pointSize){
+	for(auto renderer: renderers){
+		renderer->setPointSize(pointSize);
+	}
+}
+
 void ofRendererCollection::setDepthTest(bool depthTest) {
    for(auto renderer: renderers){
 	   renderer->setDepthTest(depthTest);
    }
+}
+
+void ofRendererCollection::setDepthWrite(bool write) {
+	for(auto renderer: renderers){
+		renderer->setDepthWrite(write);
+	}
 }
 
 void ofRendererCollection::setBlendMode(ofBlendMode blendMode){
@@ -567,16 +585,12 @@ void ofRendererCollection::setCircleResolution(int res){
 }
 void ofRendererCollection::enablePointSprites(){
    for(auto renderer: renderers){
-		if(renderer->getType()=="GL" || renderer->getType()=="ProgrammableGL"){
-			std::dynamic_pointer_cast<ofBaseGLRenderer>(renderer)->enablePointSprites();
-		}
+	   renderer->enablePointSprites();
 	}
 }
 void ofRendererCollection::disablePointSprites(){
    for(auto renderer: renderers){
-		if(renderer->getType()=="GL" || renderer->getType()=="ProgrammableGL"){
-			std::dynamic_pointer_cast<ofBaseGLRenderer>(renderer)->disablePointSprites();
-		}
+	   renderer->disablePointSprites();
 	}
 }
 

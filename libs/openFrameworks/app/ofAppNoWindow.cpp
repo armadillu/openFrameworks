@@ -86,6 +86,7 @@ private:
 	void draw(const ofFloatImage & image, float x, float y, float z, float w, float h, float sx, float sy, float sw, float sh) const{}
 	void draw(const ofShortImage & image, float x, float y, float z, float w, float h, float sx, float sy, float sw, float sh) const{}
 	void draw(const ofBaseVideoDraws & video, float x, float y, float w, float h) const{}
+	void drawBackgroundGradient(const ofFloatColor& start, const ofFloatColor& end, ofGradientMode mode) const {};
 
 	//--------------------------------------------
 	// transformations
@@ -147,12 +148,14 @@ private:
 	void setFillMode(ofFillFlag fill){}
 	ofFillFlag getFillMode(){return OF_FILLED;}
 	void setLineWidth(float lineWidth){}
+	void setPointSize(float pointSize) {}
 	void setBlendMode(ofBlendMode blendMode){}
 	void setLineSmoothing(bool smooth){}
 	void setCircleResolution(int res){};
 	void enablePointSprites(){};
 	void disablePointSprites(){};
 	void setDepthTest(bool){};
+	void setDepthWrite(bool write){};
 
 	// color options
 	void setColor(float r, float g, float b){}; // 0-1
@@ -220,6 +223,7 @@ ofAppNoWindow::ofAppNoWindow()
 :coreEvents(new ofCoreEvents)
 ,currentRenderer(new ofNoopRenderer){
 	ofAppPtr = nullptr;
+    ofInit();
 	width = 0;
 	height = 0;
 }

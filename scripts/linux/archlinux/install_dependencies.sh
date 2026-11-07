@@ -11,7 +11,7 @@ fi
 
 ROOT=$(cd $(dirname $0); pwd -P)
 
-pacman -S --needed make pkgconf gcc openal glew freeglut freeimage gstreamer gst-plugins-base gst-plugins-good gst-plugins-bad gst-libav opencv libxcursor assimp boost glfw-x11 uriparser curl pugixml rtaudio poco
+pacman -S --needed make pkgconf gcc openal glm glew freeglut gstreamer gst-plugins-base gst-plugins-good gst-plugins-bad gst-libav opencv libxcursor assimp glfw-x11 uriparser curl pugixml rtaudio poco brotli gum ccache
 
 exit_code=$?
 if [ $exit_code != 0 ]; then
@@ -19,15 +19,38 @@ if [ $exit_code != 0 ]; then
 	exit $exit_code
 fi
 
-# Update addon_config.mk files to use OpenCV 3 or 4 depending on what's installed
+# Update addon_config.mk files to use OpenCV 3, 4 or 5 depending on what's installed
 addons_dir="$(readlink -f "$ROOT/../../../addons")"
-$(pkg-config opencv4 --exists)
-exit_code=$?
-if [ $exit_code != 0 ]; then
-	echo "Updating ofxOpenCV to use openCV3"
-	sed -i -E 's/ADDON_PKG_CONFIG_LIBRARIES =(.*)opencv4(.*)$/ADDON_PKG_CONFIG_LIBRARIES =\1opencv\2/' "$addons_dir/ofxOpenCv/addon_config.mk"
-else
+if pkg-config opencv5 --exists; then
+	echo "Updating ofxOpenCV to use openCV5"
+	sed -i -E 's/(ADDON_PKG_CONFIG_LIBRARIES =.*)\bopencv[45]?\b/\1opencv5/' "$addons_dir/ofxOpenCv/addon_config.mk"
+elif pkg-config opencv4 --exists; then
 	echo "Updating ofxOpenCV to use openCV4"
-	sed -i -E 's/ADDON_PKG_CONFIG_LIBRARIES =(.*)opencv\s/ADDON_PKG_CONFIG_LIBRARIES =\1opencv4 /g' "$addons_dir/ofxOpenCv/addon_config.mk"
-	sed -i -E 's/ADDON_PKG_CONFIG_LIBRARIES =(.*)opencv$/ADDON_PKG_CONFIG_LIBRARIES =\1opencv4/g' "$addons_dir/ofxOpenCv/addon_config.mk"
+	sed -i -E 's/(ADDON_PKG_CONFIG_LIBRARIES =.*)\bopencv[45]?\b/\1opencv4/' "$addons_dir/ofxOpenCv/addon_config.mk"
+else
+	echo "Updating ofxOpenCV to use openCV3"
+	sed -i -E 's/(ADDON_PKG_CONFIG_LIBRARIES =.*)\bopencv[45]?\b/\1opencv/' "$addons_dir/ofxOpenCv/addon_config.mk"
 fi
+
+# freeimage has been dropped from Arch main rep's so we need to install it manually with yay, paru or makepkg -si
+if command -v paru &> /dev/null; then
+    AUR_HELPER_INTALL_CMD="paru -S --noconfirm freeimage"
+    echo "Installing freeimage from AUR using paru"
+elif command -v yay &> /dev/null; then
+    AUR_HELPER_INTALL_CMD="yay -S --noconfirm freeimage"
+    echo "Installing freeimage from AUR using yay"
+else
+    echo "use makepkg -si to install freeimage from AUR: https://aur.archlinux.org/packages/freeimage"
+    exit 1
+fi
+
+sudo -u $(logname) bash -c "$AUR_HELPER_INTALL_CMD"
+exit_code=$?
+
+if [ $exit_code != 0 ]; then
+    echo "error installing freeimage from AUR"
+    exit 1
+fi
+
+echo "all dependencies installed successfully!"
+

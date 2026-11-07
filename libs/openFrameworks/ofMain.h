@@ -80,9 +80,9 @@
 #include "ofWindowSettings.h"
 #if !defined(TARGET_OF_IOS) & !defined(TARGET_ANDROID) & !defined(TARGET_EMSCRIPTEN) & !defined(TARGET_RASPBERRY_PI_LEGACY)
     #include "ofAppGLFWWindow.h"
-    #if !defined(TARGET_LINUX_ARM)
-        #include "ofAppGlutWindow.h"
-    #endif
+//    #if !defined(TARGET_LINUX_ARM)
+//        #include "ofAppGlutWindow.h"
+//    #endif
 #endif
 
 //--------------------------
@@ -134,3 +134,15 @@ using std::vector;
 using std::weak_ptr;
     #endif
 #endif
+
+
+// core: ---------------------------
+#include <stdint.h>
+#include <cstdio>
+#include <cstdlib>
+#include <string>
+#include <cstring>
+#include <iostream>
+#include <vector>
+#include <memory>
+#include <functional>

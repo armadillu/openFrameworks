@@ -11,6 +11,7 @@
 #include <queue>
 #include <map>
 #include <X11/Xlib.h>
+#include <EGL/egl.h>
 
 enum ofAppEGLWindowType {
 	OF_APP_WINDOW_AUTO,
@@ -268,7 +269,7 @@ protected:
 	void readNativeUDevEvents();
 	void readNativeInputEvents();
 
-	void processInput(int fd, const char * node);	
+	void processInput(int fd, const char * node);
 	void addInput(const char * node, bool isMouse);
 	void removeInput(const char * node);
 	void printInput();
@@ -277,7 +278,8 @@ protected:
 
 private:
 	ofAppEGLWindowSettings settings;
-	int glesVersion;  ///< \brief Indicate the version of OpenGL for Embedded Systems.
+	int glesVersionMajor;  ///< \brief Indicate the major version of OpenGL for Embedded Systems.
+    int glesVersionMinor;
 	bool keyboardDetected;
 	bool mouseDetected;
 	long threadTimeout;

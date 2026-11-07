@@ -44,13 +44,13 @@ ifndef GST_VERSION
 		ifeq ($(shell export PKG_CONFIG_LIBDIR=$(PKG_CONFIG_LIBDIR);pkg-config gstreamer-1.0 --exists; echo $$?),0)
 			GST_VERSION = 1.0
 			ifdef MAKEFILE_DEBUG
-                $(info GSTVERSION=$(GST_VERSION))
+				$(info GSTVERSION=$(GST_VERSION))
 			endif
 		else
 			GST_VERSION = 0.10
 			ifdef MAKEFILE_DEBUG
-                $(info GSTVERSION=$(GST_VERSION))
-                $(info $(shell export PKG_CONFIG_LIBDIR=$(PKG_CONFIG_LIBDIR);pkg-config gstreamer-1.0 --exists; echo $$?))
+				$(info GSTVERSION=$(GST_VERSION))
+				$(info $(shell export PKG_CONFIG_LIBDIR=$(PKG_CONFIG_LIBDIR);pkg-config gstreamer-1.0 --exists; echo $$?))
 			endif
 		endif
 	else
@@ -188,7 +188,7 @@ PLATFORM_CXXFLAGS += $(PLATFORM_CXXVER)
 #   Note: Leave a leading space when adding list items with the += operator
 ################################################################################
 
-PLATFORM_LDFLAGS = -Wl,-rpath=./libs:./bin/libs -Wl,--as-needed -Wl,--gc-sections
+PLATFORM_LDFLAGS = -Wl,-rpath=./libs:./bin/libs:./ -Wl,--as-needed -Wl,--gc-sections
 
 ifeq ($(OF_USING_STD_FS),1)
 	# gcc 8 need special file system linking with -lstdc++fs. gcc 9 onwards doesn't
@@ -248,6 +248,8 @@ endif
 # core sources
 PLATFORM_CORE_EXCLUSIONS += %.mm
 PLATFORM_CORE_EXCLUSIONS += %.m
+PLATFORM_CORE_EXCLUSIONS += %.swift
+PLATFORM_CORE_EXCLUSIONS += %.kotlin
 PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/openFrameworks/video/ofDirectShowGrabber.cpp
 PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/openFrameworks/video/ofDirectShowPlayer.cpp
 PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/openFrameworks/video/ofMediaFoundationPlayer.cpp
@@ -260,18 +262,18 @@ else
 endif
 
 # third party
-PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/glew/%
+# PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/glew/%
 PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/cairo/%
 PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/videoInput/%
 PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/freetype/%
-PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/FreeImage/%
 PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/assimp/%
 PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/rtAudio/%
 PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/openssl/%
 PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/boost/%
-PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/glfw/%
 PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/curl/%
 PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/uriparser/%
+PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/metalangle/%
+#PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/glfw/%
 
 ifeq ($(USE_FMOD),0)
 	PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/fmod/%
@@ -329,12 +331,8 @@ ifneq ($(PLATFORM_ARCH),armv6l)
 	PLATFORM_LIBRARIES += pthread
 endif
 
-PLATFORM_LIBRARIES += freeimage
 ifeq ($(OF_USING_STD_FS),1)
 PLATFORM_LIBRARIES += stdc++fs
-# else
-# PLATFORM_LIBRARIES += boost_filesystem
-# PLATFORM_LIBRARIES += boost_system
 endif
 PLATFORM_LIBRARIES += pugixml
 PLATFORM_LIBRARIES += uriparser
@@ -349,7 +347,7 @@ PLATFORM_SHARED_LIBRARIES =
 
 PLATFORM_PKG_CONFIG_LIBRARIES =
 PLATFORM_PKG_CONFIG_LIBRARIES += cairo
-PLATFORM_PKG_CONFIG_LIBRARIES += zlib
+# PLATFORM_PKG_CONFIG_LIBRARIES += zlib
 PLATFORM_PKG_CONFIG_LIBRARIES += gstreamer-app-$(GST_VERSION)
 PLATFORM_PKG_CONFIG_LIBRARIES += gstreamer-$(GST_VERSION)
 PLATFORM_PKG_CONFIG_LIBRARIES += gstreamer-video-$(GST_VERSION)
@@ -359,21 +357,33 @@ PLATFORM_PKG_CONFIG_LIBRARIES += freetype2
 PLATFORM_PKG_CONFIG_LIBRARIES += fontconfig
 PLATFORM_PKG_CONFIG_LIBRARIES += sndfile
 PLATFORM_PKG_CONFIG_LIBRARIES += openal
-# PLATFORM_PKG_CONFIG_LIBRARIES += openssl
-PLATFORM_PKG_CONFIG_LIBRARIES += libcurl
 
 
-ifeq ($(CROSS_COMPILING),1)
-	ifeq "$(shell export PKG_CONFIG_LIBDIR=$(PKG_CONFIG_LIBDIR); pkg-config --exists glfw3 && echo 1)" "1"
-		PLATFORM_PKG_CONFIG_LIBRARIES += glfw3
-		PLATFORM_LIBRARIES += Xinerama
-	endif
-else
-	ifeq "$(shell pkg-config --exists glfw3 && echo 1)" "1"
-		PLATFORM_PKG_CONFIG_LIBRARIES += glfw3
-		PLATFORM_LIBRARIES += Xinerama
-	endif
+ifeq "$(shell pkg-config --exists openssl && echo 1)" "1"
+	PLATFORM_PKG_CONFIG_LIBRARIES += openssl
 endif
+
+
+ifeq "$(shell pkg-config --exists libcurl && echo 1)" "1"
+	PLATFORM_PKG_CONFIG_LIBRARIES += libcurl
+endif
+
+ifeq "$(shell pkg-config --exists libcurl4 && echo 1)" "1"
+	PLATFORM_PKG_CONFIG_LIBRARIES += libcurl4
+endif
+
+
+# ifeq ($(CROSS_COMPILING),1)
+# 	ifeq "$(shell export PKG_CONFIG_LIBDIR=$(PKG_CONFIG_LIBDIR); pkg-config --exists glfw3 && echo 1)" "1"
+# 		PLATFORM_PKG_CONFIG_LIBRARIES += glfw3
+# 		PLATFORM_LIBRARIES += Xinerama
+# 	endif
+# else
+# 	ifeq "$(shell pkg-config --exists glfw3 && echo 1)" "1"
+# 		PLATFORM_PKG_CONFIG_LIBRARIES += glfw3
+# 		PLATFORM_LIBRARIES += Xinerama
+# 	endif
+# endif
 
 ifeq ($(CROSS_COMPILING),1)
 	ifeq "$(shell export PKG_CONFIG_LIBDIR=$(PKG_CONFIG_LIBDIR); pkg-config --exists rtaudio && echo 1)" "1"
@@ -471,6 +481,8 @@ PLATFORM_LIBRARY_SEARCH_PATHS =
 #    Don't want to use a default compiler?
 ################################################################################
 #PLATFORM_CXX=
+
+ccache := $(shell which ccache 2>/dev/null)
 
 afterplatform: after
 	@echo
